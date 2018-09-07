@@ -1,0 +1,52 @@
+{
+    "name": "stechstudio/laravel-storage-connect",
+    "description": "Assists with connecting to various cloud storage services and pushing files",
+    "keywords": [
+        "stechstudio",
+        "laravel-storage-connect"
+    ],
+    "homepage": "https://github.com/stechstudio/laravel-storage-connect",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Joseph Szobody",
+            "email": "joseph@stechstudio.com",
+            "homepage": "https://stechstudio.com"
+        }
+    ],
+    "require": {
+        "illuminate/support": "^5.3",
+        "kunalvarma05/dropbox-php-sdk": "dev-master"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^5.7"
+    },
+    "autoload": {
+        "psr-4": {
+            "STS\\StorageConnect\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "STS\\StorageConnect\\": "tests"
+        }
+    },
+    "scripts": {
+        "test": "vendor/bin/phpunit",
+        "test-coverage": "vendor/bin/phpunit --coverage-html coverage"
+
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "STS\\StorageConnect\\StorageConnectServiceProvider"
+            ],
+            "aliases": {
+                "Skeleton": "STS\\StorageConnect\\StorageConnectFacade"
+            }
+        }
+    }
+}
