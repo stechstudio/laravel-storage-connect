@@ -2,7 +2,7 @@
 namespace STS\StorageConnect\Providers;
 
 use Illuminate\Http\RedirectResponse;
-use SocialiteProviders\Manager\OAuth2\User;
+use STS\StorageConnect\Connections\AbstractConnection;
 
 /**
  * Interface ProviderContract
@@ -21,7 +21,7 @@ interface ProviderContract
     public function name();
 
     /**
-     * @return string
+     * @return AbstractConnection
      */
-    public function serialize();
+    public function connection();
 }

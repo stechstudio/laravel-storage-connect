@@ -3,9 +3,11 @@ namespace STS\StorageConnect;
 
 use Illuminate\Support\Manager;
 use SocialiteProviders\Manager\OAuth2\User;
+use STS\StorageConnect\Connections\AbstractConnection;
+use STS\StorageConnect\Connections\DropboxConnection;
 use STS\StorageConnect\Drivers\DropboxDriver;
 use STS\StorageConnect\Events\StorageConnected;
-use STS\StorageConnect\Providers\Dropbox;
+use STS\StorageConnect\Providers\DropboxProvider;
 
 /**
  * Class StorageConnectManager
@@ -29,6 +31,11 @@ class StorageConnectManager extends Manager
     protected $loadCallback;
 
     /**
+     * @var array
+     */
+    protected $connections = [];
+
+    /**
      * @return string
      */
     public function getDefaultDriver()
@@ -37,11 +44,11 @@ class StorageConnectManager extends Manager
     }
 
     /**
-     * @return Dropbox
+     * @return DropboxProvider
      */
     public function createDropboxDriver()
     {
-        return new Dropbox($this->app['config']['services.dropbox'], $this, $this->app);
+        return new DropboxProvider($this->app['config']['services.dropbox'], $this, $this->app);
     }
 
     /**
@@ -97,14 +104,14 @@ class StorageConnectManager extends Manager
     }
 
     /**
-     * @param array $config
+     * @param AbstractConnection $connection
      * @param $driver
      */
-    public function saveConnectedStorage(array $config, $driver)
+    public function saveConnectedStorage(AbstractConnection $connection, $driver)
     {
-        call_user_func_array($this->saveCallback, [$config, $driver]);
+        call_user_func_array($this->saveCallback, [$connection, $driver]);
 
-        event(new StorageConnected());
+        event(new StorageConnected($connection, $driver));
     }
 
     /**
@@ -123,5 +130,50 @@ class StorageConnectManager extends Manager
     public function load($driver)
     {
         return $this->driver($driver)->load((array) call_user_func($this->loadCallback, $driver));
+    }
+
+    /**
+     * Get a connection instance.
+     *
+     * @param  string  $driver
+     * @return mixed
+     */
+    public function connection($driver = null)
+    {
+        $driver = $driver ?: $this->getDefaultDriver();
+
+        if (! isset($this->connections[$driver])) {
+            $this->connections[$driver] = $this->createConnection($driver);
+        }
+
+        return $this->connections[$driver];
+    }
+
+    /**
+     * Create a new connection instance.
+     *
+     * @param  string  $driver
+     * @return mixed
+     *
+     * @throws \InvalidArgumentException
+     */
+    protected function createConnection($driver)
+    {
+
+        $method = 'create'.Str::studly($driver).'Connection';
+
+        if (method_exists($this, $method)) {
+            return $this->$method();
+        }
+
+        throw new InvalidArgumentException("Connection [$driver] not supported.");
+    }
+
+    /**
+     * @return DropboxConnection
+     */
+    protected function createDropboxConnection()
+    {
+        return new DropboxConnection($this->driver('dropbox'));
     }
 }

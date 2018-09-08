@@ -5,7 +5,7 @@ namespace STS\StorageConnect;
 use Illuminate\Support\ServiceProvider;
 use SocialiteProviders\Dropbox\DropboxExtendSocialite;
 use SocialiteProviders\Manager\SocialiteWasCalled;
-use STS\StorageConnect\Providers\Dropbox;
+use STS\StorageConnect\Providers\DropboxProvider;
 
 class StorageConnectServiceProvider extends ServiceProvider
 {
@@ -48,7 +48,7 @@ class StorageConnectServiceProvider extends ServiceProvider
         );
 
         $this->app['events']->listen(SocialiteWasCalled::class, function(SocialiteWasCalled $event) {
-            $event->extendSocialite('dropbox', Dropbox::class);
+            $event->extendSocialite('dropbox', DropboxProvider::class);
         });
     }
 

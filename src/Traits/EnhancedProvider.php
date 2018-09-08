@@ -1,8 +1,11 @@
 <?php
-namespace STS\StorageConnect\Providers\Traits;
+
+namespace STS\StorageConnect\Traits;
+
 use Illuminate\Http\RedirectResponse;
 use SocialiteProviders\Manager\OAuth2\User;
 use StorageConnect;
+use STS\StorageConnect\Connections\AbstractConnection;
 use STS\StorageConnect\StorageConnectManager;
 
 /**
@@ -31,11 +34,10 @@ trait EnhancedProvider
      */
     protected $user;
 
-
     /**
-     * @var array
+     * @var AbstractConnection
      */
-    protected $connection = [];
+    protected $connection;
 
     /**
      * EnhancedProvider constructor.
@@ -44,7 +46,7 @@ trait EnhancedProvider
      * @param StorageConnectManager $manager
      * @param                       $app
      */
-    public function __construct(array $config, StorageConnectManager $manager, $app)
+    public function __construct( array $config, StorageConnectManager $manager, $app )
     {
         $this->fullConfig = $config;
         $this->manager = $manager;
@@ -85,7 +87,9 @@ trait EnhancedProvider
      */
     public function finish()
     {
-        $this->manager->saveConnectedStorage($this->serializeUser($this->user()), $this->name());
+        $this->connection = $this->mapUserToConnection($this->user());
+
+        $this->manager->saveConnectedStorage($this->connection, $this->name());
 
         return new RedirectResponse($this->fullConfig['redirect_after_connect']);
     }
@@ -95,7 +99,7 @@ trait EnhancedProvider
      */
     public function user()
     {
-        if(!$this->user) {
+        if (!$this->user) {
             $this->user = parent::user();
         }
 
@@ -111,11 +115,11 @@ trait EnhancedProvider
     }
 
     /**
-     * @param array $connection
+     * @param AbstractConnection $connection
      *
      * @return $this
      */
-    public function load(array $connection)
+    public function load( AbstractConnection $connection )
     {
         $this->connection = $connection;
 
@@ -123,26 +127,10 @@ trait EnhancedProvider
     }
 
     /**
-     * @return array
+     * @return AbstractConnection
      */
-    public function toArray()
+    public function connection()
     {
         return $this->connection;
-    }
-
-    /**
-     * @return string
-     */
-    public function serialize()
-    {
-        return $this->__toString();
-    }
-
-    /**
-     * @return string
-     */
-    public function __toString()
-    {
-        return json_encode($this->toArray());
     }
 }

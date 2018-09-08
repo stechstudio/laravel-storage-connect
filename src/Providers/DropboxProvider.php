@@ -5,10 +5,12 @@ namespace STS\StorageConnect\Providers;
 use Kunnu\Dropbox\DropboxApp;
 use SocialiteProviders\Dropbox\Provider;
 use SocialiteProviders\Manager\OAuth2\User;
-use STS\StorageConnect\Providers\Traits\EnhancedProvider;
+use STS\StorageConnect\Connections\AbstractConnection;
+use STS\StorageConnect\Connections\DropboxConnection;
+use STS\StorageConnect\Traits\EnhancedProvider;
 use Kunnu\Dropbox\Dropbox as DropboxService;
 
-class Dropbox extends Provider implements ProviderContract
+class DropboxProvider extends Provider implements ProviderContract
 {
     use EnhancedProvider;
 
@@ -20,18 +22,16 @@ class Dropbox extends Provider implements ProviderContract
     /**
      * @param User $user
      *
-     * @return $this
+     * @return AbstractConnection
      */
-    protected function mapUser( User $user )
+    protected function mapUserToConnection( User $user )
     {
-        $this->connection = [
-            'status'       => 'active',
-            'name'         => $user->user['name']['display_name'],
-            'email'        => $user->user['email'],
-            'access_token' => $user->accessTokenResponseBody
-        ];
-
-        return $this;
+        return (new DropboxConnection($this))->load([
+            'status' => 'active',
+            'name'   => $user->user['name']['display_name'],
+            'email'  => $user->user['email'],
+            'token'  => $user->accessTokenResponseBody
+        ]);
     }
 
     /**
@@ -48,7 +48,7 @@ class Dropbox extends Provider implements ProviderContract
     /**
      * @return DropboxService
      */
-    protected function service()
+    public function service()
     {
         if (!$this->service) {
             $this->service = new DropboxService(
@@ -56,7 +56,7 @@ class Dropbox extends Provider implements ProviderContract
                 ['random_string_generator' => 'openssl']
             );
 
-            $this->service->setAccessToken($this->connection['access_token']['access_token']);
+            $this->service->setAccessToken($this->connection->token['access_token']);
         }
 
         return $this->service;
