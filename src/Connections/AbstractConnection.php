@@ -1,8 +1,10 @@
 <?php
+
 namespace STS\StorageConnect\Connections;
 
 use STS\StorageConnect\Providers\DropboxProvider;
 use STS\StorageConnect\Providers\ProviderContract;
+use Log;
 
 /**
  * Class AbstractConnection
@@ -11,7 +13,7 @@ use STS\StorageConnect\Providers\ProviderContract;
 abstract class AbstractConnection
 {
     /**
-     * @var
+     * @var Illuminate\Database\Eloquent\Model
      */
     protected $owner;
 
@@ -26,11 +28,16 @@ abstract class AbstractConnection
     protected $provider;
 
     /**
+     * @var object
+     */
+    protected $job;
+
+    /**
      * AbstractConnection constructor.
      *
      * @param $provider
      */
-    public function __construct( $provider)
+    public function __construct( $provider )
     {
         $this->provider = $provider;
     }
@@ -40,7 +47,7 @@ abstract class AbstractConnection
      *
      * @return $this
      */
-    public function belongsTo( $owner)
+    public function belongsTo( $owner )
     {
         $this->owner = $owner;
 
@@ -52,7 +59,7 @@ abstract class AbstractConnection
      */
     public function driver()
     {
-        if(!$this->provider) {
+        if (!$this->provider) {
             $this->provider = $this->manager->driver($this->name);
         }
 
@@ -64,7 +71,7 @@ abstract class AbstractConnection
      *
      * @return $this
      */
-    public function unserialize( $config)
+    public function unserialize( $config )
     {
         return $this->load(json_decode($config, true));
     }
@@ -74,9 +81,33 @@ abstract class AbstractConnection
      *
      * @return $this
      */
-    public function load(array $config)
+    public function load( array $config )
     {
         $this->config = $config;
+
+        return $this;
+    }
+
+    /**
+     * @return $this
+     */
+    public function save()
+    {
+        if ($this->owner) {
+            $this->owner->setStorageConnection($this->name, $this);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @param $job
+     *
+     * @return $this
+     */
+    public function setJob($job)
+    {
+        $this->job = $job;
 
         return $this;
     }
@@ -100,6 +131,16 @@ abstract class AbstractConnection
     /**
      * @return string
      */
+    public function indentify()
+    {
+        return $this->owner
+            ? (new \ReflectionClass($this->owner))->getShortName() . ":" . $this->owner->getKey()
+            : $this->email;
+    }
+
+    /**
+     * @return string
+     */
     public function __toString()
     {
         return $this->serialize();
@@ -110,8 +151,43 @@ abstract class AbstractConnection
      *
      * @return mixed
      */
-    public function __get( $key)
+    public function __get( $key )
     {
         return array_get($this->config, $key);
+    }
+
+    /**
+     * @param $key
+     * @param $value
+     */
+    public function __set($key, $value)
+    {
+        array_set($this->config, $key, $value);
+    }
+
+    protected function retry($message, $localPath)
+    {
+        Log::warning($message, [
+            "path" => $localPath,
+            "driver" => $this->name,
+            "connection" => $this->identify()
+        ]);
+
+        if($this->job) {
+            $this->job->release(180 * $this->job->attempts());
+        }
+    }
+
+    protected function disable($message, $reason)
+    {
+        Log::error($message, [
+            "driver" => $this->name,
+            "connection" => $this->identify()
+        ]);
+
+        $this->status = "disabled";
+        $this->reason = $reason;
+
+        $this->save();
     }
 }
