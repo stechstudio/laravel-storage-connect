@@ -2,7 +2,10 @@
 namespace STS\StorageConnect;
 
 use Illuminate\Support\Manager;
+use SocialiteProviders\Manager\OAuth2\User;
 use STS\StorageConnect\Drivers\DropboxDriver;
+use STS\StorageConnect\Events\StorageConnected;
+use STS\StorageConnect\Providers\Dropbox;
 
 /**
  * Class StorageConnectManager
@@ -26,11 +29,6 @@ class StorageConnectManager extends Manager
     protected $loadCallback;
 
     /**
-     * @var callable
-     */
-    protected $verifyCallback;
-
-    /**
      * @return string
      */
     public function getDefaultDriver()
@@ -39,11 +37,11 @@ class StorageConnectManager extends Manager
     }
 
     /**
-     * @return DropboxDriver
+     * @return Dropbox
      */
     public function createDropboxDriver()
     {
-        return new DropboxDriver($this->app['config']['services.dropbox'], $this);
+        return new Dropbox($this->app['config']['services.dropbox'], $this, $this->app);
     }
 
     /**
@@ -53,7 +51,7 @@ class StorageConnectManager extends Manager
      */
     public function isSupportedDriver($driver)
     {
-        return in_array($driver, $this->app['config']['storage-connect.drivers']) && is_array($this->app['config']["services.$driver"]);
+        return in_array($driver, $this->app['config']['storage-connect.enabled']) && is_array($this->app['config']["services.$driver"]);
     }
 
     /**
@@ -93,35 +91,6 @@ class StorageConnectManager extends Manager
     /**
      * @param $callback
      */
-    public function verifyNewConnectedStorageUsing($callback)
-    {
-        $this->verifyCallback = $callback;
-    }
-
-    /**
-     * @param $driver
-     *
-     * @return string
-     * @throws \Exception
-     */
-    public function finish($driver)
-    {
-        $state = $this->driver($driver)->getFinishedState();
-
-        $this->driver($driver)->verifyCsrf($state);
-
-        if(isset($this->verifyCallback) && call_user_func_array($this->verifyCallback, [$state, $driver]) === false) {
-            throw new \Exception("Error connecting your cloud storage account");
-        }
-
-        $this->saveConnectedStorage($this->driver($driver)->finish(), $driver);
-
-        return $this->app['config']['storage-connect.redirect_after_connect'];
-    }
-
-    /**
-     * @param $callback
-     */
     public function saveConnectedStorageUsing($callback)
     {
         $this->saveCallback = $callback;
@@ -134,6 +103,8 @@ class StorageConnectManager extends Manager
     public function saveConnectedStorage(array $config, $driver)
     {
         call_user_func_array($this->saveCallback, [$config, $driver]);
+
+        event(new StorageConnected());
     }
 
     /**
@@ -149,8 +120,8 @@ class StorageConnectManager extends Manager
      *
      * @return mixed
      */
-    public function loadConnectedStorage($driver)
+    public function load($driver)
     {
-        return (array) call_user_func($this->loadCallback, $driver);
+        return $this->driver($driver)->load((array) call_user_func($this->loadCallback, $driver));
     }
 }

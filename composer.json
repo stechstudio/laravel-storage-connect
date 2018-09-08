@@ -16,7 +16,8 @@
     ],
     "require": {
         "illuminate/support": "^5.3",
-        "kunalvarma05/dropbox-php-sdk": "dev-master"
+        "kunalvarma05/dropbox-php-sdk": "dev-master",
+        "socialiteproviders/dropbox": "^4.0"
     },
     "require-dev": {
         "phpunit/phpunit": "^5.7"

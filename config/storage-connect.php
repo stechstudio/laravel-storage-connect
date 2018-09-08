@@ -8,5 +8,5 @@ return [
 
     'redirect_after_connect' => '/',
 
-    'drivers' => ['dropbox']
+    'enabled' => ['dropbox']
 ];
