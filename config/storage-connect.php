@@ -8,5 +8,5 @@ return [
 
     'redirect_after_connect' => '/',
 
-    'enabled' => ['dropbox']
+    'enabled' => ['dropbox', 'google']
 ];

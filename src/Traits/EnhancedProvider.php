@@ -65,7 +65,11 @@ trait EnhancedProvider
     protected function callbackUrl()
     {
         return sprintf("https://%s/%s/callback/%s",
-            $this->app['config']->get('storage-connect.callback_domain', $this->app['request']->getHost()),
+            $this->app['config']->get('storage-connect.callback_domain',
+                array_get($this->fullConfig, 'callback_domain',
+                    $this->app['request']->getHost()
+                )
+            ),
             $this->app['config']->get('storage-connect.route'),
             $this->name()
         );
@@ -91,7 +95,7 @@ trait EnhancedProvider
 
         $this->manager->saveConnectedStorage($this->connection, $this->name());
 
-        return new RedirectResponse($this->fullConfig['redirect_after_connect']);
+        return new RedirectResponse($this->app['config']->get('storage-connect.redirect_after_connect'));
     }
 
     /**

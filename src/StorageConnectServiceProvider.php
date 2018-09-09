@@ -6,6 +6,7 @@ use Illuminate\Support\ServiceProvider;
 use SocialiteProviders\Dropbox\DropboxExtendSocialite;
 use SocialiteProviders\Manager\SocialiteWasCalled;
 use STS\StorageConnect\Providers\DropboxProvider;
+use STS\StorageConnect\Providers\GoogleProvider;
 
 class StorageConnectServiceProvider extends ServiceProvider
 {
@@ -47,9 +48,10 @@ class StorageConnectServiceProvider extends ServiceProvider
             \SocialiteProviders\Manager\ServiceProvider::class
         );
 
-        $this->app['events']->listen(SocialiteWasCalled::class, function(SocialiteWasCalled $event) {
-            $event->extendSocialite('dropbox', DropboxProvider::class);
-        });
+//        $this->app['events']->listen(SocialiteWasCalled::class, function(SocialiteWasCalled $event) {
+//            $event->extendSocialite('dropbox', DropboxProvider::class);
+//            $event->extendSocialite('google', GoogleProvider::class);
+//        });
     }
 
     /**

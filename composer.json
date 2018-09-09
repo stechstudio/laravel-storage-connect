@@ -15,10 +15,13 @@
         }
     ],
     "require": {
+        "google/apiclient": "^2.2",
         "illuminate/queue": "^5.3",
         "illuminate/support": "^5.3",
         "kunalvarma05/dropbox-php-sdk": "dev-master",
-        "socialiteproviders/dropbox": "^4.0"
+        "socialiteproviders/dropbox": "^4.0",
+        "socialiteproviders/google": "^3.0",
+        "stechstudio/backoff": "^1.0"
     },
     "require-dev": {
         "phpunit/phpunit": "^5.7"

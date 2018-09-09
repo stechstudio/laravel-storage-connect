@@ -2,12 +2,15 @@
 namespace STS\StorageConnect;
 
 use Illuminate\Support\Manager;
+use InvalidArgumentException;
 use SocialiteProviders\Manager\OAuth2\User;
 use STS\StorageConnect\Connections\AbstractConnection;
 use STS\StorageConnect\Connections\DropboxConnection;
+use STS\StorageConnect\Connections\GoogleConnection;
 use STS\StorageConnect\Drivers\DropboxDriver;
 use STS\StorageConnect\Events\StorageConnected;
 use STS\StorageConnect\Providers\DropboxProvider;
+use STS\StorageConnect\Providers\GoogleProvider;
 
 /**
  * Class StorageConnectManager
@@ -49,6 +52,14 @@ class StorageConnectManager extends Manager
     public function createDropboxDriver()
     {
         return new DropboxProvider($this->app['config']['services.dropbox'], $this, $this->app);
+    }
+
+    /**
+     * @return GoogleProvider
+     */
+    public function createGoogleDriver()
+    {
+        return new GoogleProvider($this->app['config']['services.google'], $this, $this->app);
     }
 
     /**
@@ -175,5 +186,13 @@ class StorageConnectManager extends Manager
     protected function createDropboxConnection()
     {
         return new DropboxConnection($this->driver('dropbox'));
+    }
+
+    /**
+     * @return GoogleConnection
+     */
+    protected function createGoogleConnection()
+    {
+        return new GoogleConnection($this->driver('google'));
     }
 }
