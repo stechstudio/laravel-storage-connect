@@ -2,6 +2,7 @@
 namespace STS\StorageConnect;
 
 use Illuminate\Support\Manager;
+use Illuminate\Support\Str;
 use InvalidArgumentException;
 use SocialiteProviders\Manager\OAuth2\User;
 use STS\StorageConnect\Connections\AbstractConnection;
@@ -140,7 +141,9 @@ class StorageConnectManager extends Manager
      */
     public function load($driver)
     {
-        return $this->driver($driver)->load((array) call_user_func($this->loadCallback, $driver));
+        return $this->connection($driver)
+            ->load(call_user_func($this->loadCallback, $driver))
+            ->provider();
     }
 
     /**

@@ -40,6 +40,7 @@ abstract class AbstractConnection
     public function __construct( $provider )
     {
         $this->provider = $provider;
+        $this->provider->setConnection($this);
     }
 
     /**
@@ -57,7 +58,7 @@ abstract class AbstractConnection
     /**
      * @return mixed
      */
-    public function driver()
+    public function provider()
     {
         if (!$this->provider) {
             $this->provider = $this->manager->driver($this->name);

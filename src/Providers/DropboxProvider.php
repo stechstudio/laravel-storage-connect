@@ -52,7 +52,7 @@ class DropboxProvider extends Provider implements ProviderContract
     {
         if (!$this->service) {
             $this->service = new DropboxService(
-                new DropboxApp($this->config['client_id'], $this->config['client_secret']),
+                new DropboxApp($this->fullConfig['client_id'], $this->fullConfig['client_secret']),
                 ['random_string_generator' => 'openssl']
             );
 

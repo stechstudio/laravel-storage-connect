@@ -137,4 +137,16 @@ trait EnhancedProvider
     {
         return $this->connection;
     }
+
+    /**
+     * @param AbstractConnection $connection
+     *
+     * @return $this
+     */
+    public function setConnection(AbstractConnection $connection)
+    {
+        $this->connection = $connection;
+
+        return $this;
+    }
 }
