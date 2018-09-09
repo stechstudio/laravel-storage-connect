@@ -35,12 +35,12 @@ class DropboxProvider extends Provider implements ProviderContract
     }
 
     /**
-     * @param $localPath
-     * @param $remotePath
+     * @param $sourcePath
+     * @param $destinationPath
      */
-    public function upload( $localPath, $remotePath )
+    public function upload( $sourcePath, $destinationPath )
     {
-        $this->service()->upload($localPath, str_start($remotePath, '/'), [
+        $this->service()->upload($sourcePath, str_start($destinationPath, '/'), [
             'mode' => 'overwrite'
         ]);
     }

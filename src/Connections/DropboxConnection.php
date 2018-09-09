@@ -1,10 +1,9 @@
 <?php
 namespace STS\StorageConnect\Connections;
 
-use Kunnu\Dropbox\Exceptions\DropboxClientException;
+use Exception;
 use Queue;
 use Log;
-use STS\StorageConnect\Jobs\UploadFile;
 
 /**
  * Class DropboxConnection
@@ -17,44 +16,22 @@ class DropboxConnection extends AbstractConnection
      */
     protected $name = "dropbox";
 
-
     /**
-     * @param      $localPath
-     * @param      $remotePath
-     * @param bool $queued
-     *
-     * @return bool
+     * @param Exception $e
+     * @param                        $sourcePath
      */
-    public function upload( $localPath, $remotePath, $queued = true)
-    {
-        if($queued) {
-            return Queue::push(new UploadFile($localPath, $remotePath, $this));
-        }
-
-        try {
-            $this->provider->upload($localPath, $remotePath);
-            return true;
-        } catch(DropboxClientException $e) {
-            $this->handleUploadError($e, $localPath);
-        }
-    }
-
-    /**
-     * @param DropboxClientException $e
-     * @param                        $localPath
-     */
-    protected function handleUploadError( DropboxClientException $e, $localPath)
+    protected function handleUploadError( Exception $e, $sourcePath)
     {
         // First check for connection failure
         if(str_contains($e->getMessage(), "Connection timed out")) {
-            return $this->retry("Connection timeout", $localPath);
+            return $this->retry("Connection timeout", $sourcePath);
         }
 
         // See if we have a parseable error
         $error = json_decode($e->getMessage(), true);
 
         if(!is_array($error)) {
-            return $this->retry("Unknown error pushing EFS file to Dropbox: " . $e->getMessage(), $localPath);
+            return $this->retry("Unknown error pushing EFS file to Dropbox: " . $e->getMessage(), $sourcePath);
         }
 
         if(str_contains(array_get($error, 'error_summary'), "insufficient_space")) {
@@ -66,9 +43,9 @@ class DropboxConnection extends AbstractConnection
         }
 
         if(str_contains(array_get($error, 'error_summary'), 'too_many_write_operations')) {
-            return $this->retry("Getting rate limited", $localPath);
+            return $this->retry("Getting rate limited", $sourcePath);
         }
 
-        $this->retry("Unknown Dropbox exception: " . $e->getMessage(), $localPath);
+        $this->retry("Unknown Dropbox exception: " . $e->getMessage(), $sourcePath);
     }
 }

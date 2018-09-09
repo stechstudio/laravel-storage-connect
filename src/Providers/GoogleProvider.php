@@ -1,9 +1,8 @@
 <?php
-
 namespace STS\StorageConnect\Providers;
 
-
 use Google_Client;
+use Google_Http_MediaFileUpload;
 use Google_Service_Drive;
 use Google_Service_Drive_DriveFile;
 use SocialiteProviders\Google\Provider;
@@ -11,7 +10,12 @@ use SocialiteProviders\Manager\OAuth2\User;
 use STS\StorageConnect\Connections\AbstractConnection;
 use STS\StorageConnect\Connections\GoogleConnection;
 use STS\StorageConnect\Traits\EnhancedProvider;
+use Log;
 
+/**
+ * Class GoogleProvider
+ * @package STS\StorageConnect\Providers
+ */
 class GoogleProvider extends Provider implements ProviderContract
 {
     use EnhancedProvider;
@@ -53,52 +57,85 @@ class GoogleProvider extends Provider implements ProviderContract
     }
 
     /**
-     * @param $localPath
-     * @param $remotePath
+     * @param $sourcePath
+     * @param $destinationPath
+     *
+     * @return string
      */
-    public function upload( $localPath, $remotePath )
+    public function upload( $sourcePath, $destinationPath )
     {
-        $folderId = $this->prepareFolders(explode("/", ltrim(dirname($remotePath), "/")));
-        $filename = basename($remotePath);
-        $filesize = filesize($localPath);
-
-        if ($filesize >= 5 * 1024 * 1024) {
-            return $this->uploadChunked($localPath, $filename, $folderId);
-        }
+        $folderId = $this->prepareFolders(explode("/", ltrim(dirname($destinationPath), "/")));
+        $filename = basename($destinationPath);
+        $filesize = filesize($sourcePath);
 
         $file = new Google_Service_Drive_DriveFile([
             'name'     => $filename,
             'parents'  => [$folderId],
+            'mimeType' => mime_content_type($sourcePath)
         ]);
 
-        $result = $this->service()->files->create(
+        if ($filesize >= 5 * 1024 * 1024) {
+            return $this->uploadChunked($sourcePath, $file, $filesize, $folderId);
+        }
+
+        return $this->service()->files->create(
             $file,
             [
-                'data' => file_get_contents($localPath),
-                'mimeType' => mime_content_type($localPath),
+                'data' => file_get_contents($sourcePath),
+                'mimeType' => mime_content_type($sourcePath),
                 'uploadType' => 'media',
             ]
-        );
-
-        return $result->id;
-    }
-
-    protected function uploadChunked( $localPath, $file, $folderId )
-    {
-        //TODO
+        )->id;
     }
 
     /**
-     * @param array $folders
-     * @param null  $parentFolderId
+     * @param                                $sourcePath
+     * @param Google_Service_Drive_DriveFile $file
+     * @param                                $filesize
+     *
+     * @return string
+     */
+    protected function uploadChunked( $sourcePath, Google_Service_Drive_DriveFile $file, $filesize )
+    {
+        $chunkSize = 2 * 1024 * 1024;
+
+        $this->service()->getClient()->setDefer(true);
+        $request = $this->service()->files->create($file);
+
+        $upload = new Google_Http_MediaFileUpload(
+            $this->service()->getClient(),
+            $request,
+            $file->getMimeType(),
+            null,
+            true,
+            $chunkSize
+        );
+        $upload->setFileSize($filesize);
+
+        $file = false;
+        $handle = fopen($sourcePath, "rb");
+
+        while (!$file && !feof($handle)) {
+            $chunk = fread($handle, $chunkSize);
+            $file = $upload->nextChunk($chunk);
+        }
+
+        fclose($handle);
+        $this->service()->getClient()->setDefer(false);
+
+        return $file->id;
+    }
+
+    /**
+     * @param array       $folders
+     * @param string $parentFolderId
      *
      * @return mixed
      */
-    protected function prepareFolders( array $folders, $parentFolderId = null )
+    protected function prepareFolders( array $folders, $parentFolderId = 'root' )
     {
         $foldername = array_shift($folders);
 
-        // See if this folder already exists
         if(!$folder = $this->folderExists($foldername, $parentFolderId)) {
             $fileMetadata = new Google_Service_Drive_DriveFile([
                 'name'     => $foldername,
@@ -118,26 +155,19 @@ class GoogleProvider extends Provider implements ProviderContract
 
     /**
      * @param      $name
-     * @param null $parentFolderId
+     * @param string $parentFolderId
      *
      * @return mixed
      */
-    protected function folderExists($name, $parentFolderId = null)
+    protected function folderExists($name, $parentFolderId = 'root')
     {
         $name = str_replace("'", "", $name);
-        $query = "mimeType = 'application/vnd.google-apps.folder' and name = '$name' and trashed = false";
 
-        if($parentFolderId != null) {
-            $query .= " and '$parentFolderId' in parents";
-        }
-
-        $response = $this->service()->files->listFiles([
-            'q' => $query,
+        return collect($this->service()->files->listFiles([
+            'q' => "mimeType = 'application/vnd.google-apps.folder' and name = '$name' and trashed = false  and '$parentFolderId' in parents",
             'spaces' => 'drive',
             'fields' => 'files(id, name)',
-        ]);
-
-        return array_shift($response->files);
+        ]))->first();
     }
 
     /**

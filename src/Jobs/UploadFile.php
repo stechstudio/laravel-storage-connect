@@ -17,7 +17,7 @@ class UploadFile implements ShouldQueue
     /**
      * @var string
      */
-    protected $localPath;
+    protected $sourcePath;
     /**
      * @var string
      */
@@ -40,13 +40,13 @@ class UploadFile implements ShouldQueue
     /**
      * UploadFile constructor.
      *
-     * @param $localPath
+     * @param $sourcePath
      * @param $remotePath
      * @param AbstractConnection $connection
      */
-    public function __construct( $localPath, $remotePath, AbstractConnection $connection)
+    public function __construct( $sourcePath, $remotePath, AbstractConnection $connection)
     {
-        $this->localPath = $localPath;
+        $this->sourcePath = $sourcePath;
         $this->remotePath = $remotePath;
         $this->connection = $connection;
     }
@@ -57,6 +57,6 @@ class UploadFile implements ShouldQueue
     public function handle()
     {
         $this->connection->setJob($this);
-        $this->connection->upload($this->localPath, $this->remotePath, false);
+        $this->connection->upload($this->sourcePath, $this->remotePath, false);
     }
 }

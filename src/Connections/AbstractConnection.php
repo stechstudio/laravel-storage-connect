@@ -2,9 +2,13 @@
 
 namespace STS\StorageConnect\Connections;
 
+use Exception;
+use STS\Backoff\Backoff;
+use STS\Backoff\Strategies\PolynomialStrategy;
+use STS\StorageConnect\Jobs\UploadFile;
 use STS\StorageConnect\Providers\DropboxProvider;
-use STS\StorageConnect\Providers\ProviderContract;
 use Log;
+use Queue;
 
 /**
  * Class AbstractConnection
@@ -106,7 +110,7 @@ abstract class AbstractConnection
      *
      * @return $this
      */
-    public function setJob($job)
+    public function setJob( $job )
     {
         $this->job = $job;
 
@@ -161,28 +165,42 @@ abstract class AbstractConnection
      * @param $key
      * @param $value
      */
-    public function __set($key, $value)
+    public function __set( $key, $value )
     {
         array_set($this->config, $key, $value);
     }
 
-    protected function retry($message, $localPath)
+    /**
+     * @param $message
+     * @param $localPath
+     */
+    protected function retry( $message, $localPath )
     {
         Log::warning($message, [
-            "path" => $localPath,
-            "driver" => $this->name,
+            "path"       => $localPath,
+            "driver"     => $this->name,
             "connection" => $this->identify()
         ]);
 
-        if($this->job) {
-            $this->job->release(180 * $this->job->attempts());
+        if ($this->job) {
+            $this->job->release(
+                (new Backoff)
+                    ->setStrategy(new PolynomialStrategy(5, 3))
+                    ->setWaitCap(900)
+                    ->setJitter(true)
+                    ->getWaitTime($this->job->attempts())
+            );
         }
     }
 
-    protected function disable($message, $reason)
+    /**
+     * @param $message
+     * @param $reason
+     */
+    protected function disable( $message, $reason )
     {
         Log::error($message, [
-            "driver" => $this->name,
+            "driver"     => $this->name,
             "connection" => $this->identify()
         ]);
 
@@ -191,4 +209,28 @@ abstract class AbstractConnection
 
         $this->save();
     }
+
+    /**
+     * @param      $sourcePath
+     * @param      $remotePath
+     * @param bool $queued
+     *
+     * @return bool
+     */
+    public function upload( $sourcePath, $remotePath, $queued = true )
+    {
+        if ($queued) {
+            return Queue::push(new UploadFile($sourcePath, $remotePath, $this));
+        }
+
+        try {
+            $this->provider->upload($sourcePath, $remotePath);
+
+            return true;
+        } catch (Exception $e) {
+            $this->handleUploadError($e, $sourcePath);
+        }
+    }
+
+    abstract protected function handleUploadError(Exception $e, $sourcePath);
 }
