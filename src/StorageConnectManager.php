@@ -40,6 +40,11 @@ class StorageConnectManager extends Manager
     protected $connections = [];
 
     /**
+     * @var string
+     */
+    public static $appName = null;
+
+    /**
      * @return string
      */
     public function getDefaultDriver()
@@ -197,5 +202,21 @@ class StorageConnectManager extends Manager
     protected function createGoogleConnection()
     {
         return new GoogleConnection($this->driver('google'));
+    }
+
+    /**
+     * @return string
+     */
+    public function appName()
+    {
+        if($appName = self::appName) {
+            return $appName;
+        }
+
+        if($appName = $this->app['config']->get('storage-connect.app_name')) {
+            return $appName;
+        }
+
+        return $this->app['config']->get('app.name');
     }
 }

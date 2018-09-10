@@ -65,7 +65,12 @@ class GoogleProvider extends Provider implements ProviderContract
      */
     public function upload( $sourcePath, $destinationPath )
     {
-        $folderId = $this->prepareFolders(explode("/", ltrim(dirname($destinationPath), "/")));
+        $folderId = $this->prepareFolders(
+            array_prepend(
+                explode("/", ltrim(dirname($destinationPath), "/")),
+                $this->manager->appName()
+            )
+        );
         $filename = basename($destinationPath);
         $filesize = filesize($sourcePath);
 
