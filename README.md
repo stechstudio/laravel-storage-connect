@@ -7,7 +7,7 @@ This package drastically simplifies the process of authenticating to a user's cl
 Let's say you want to connect to the Dropbox account of your currently logged-in user. In a controller method you would simply call:
 
 ```php
-return Auth::user()->dropbox_connection->setup($redirectUrl);
+return Auth::user()->dropbox_connection->connect($redirectUrl);
 ```
 
 This will redirect the user through the Dropbox oauth process, handle the callback, store the access tokens in the database for your user, and finally redirect back to your desired page.

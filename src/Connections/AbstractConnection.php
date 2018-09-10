@@ -10,6 +10,7 @@ use STS\StorageConnect\Events\ConnectionDisabled;
 use STS\StorageConnect\Events\RetryingUpload;
 use STS\StorageConnect\Events\UploadFailed;
 use STS\StorageConnect\Events\UploadSucceeded;
+use STS\StorageConnect\Exceptions\ConnectionUnavailableException;
 use STS\StorageConnect\Jobs\UploadFile;
 use STS\StorageConnect\Providers\DropboxProvider;
 use Log;
@@ -72,6 +73,27 @@ abstract class AbstractConnection
     }
 
     /**
+     * @return bool
+     */
+    public function isEnabled()
+    {
+        return $this->isConnected() && $this->status == "enabled";
+    }
+
+    /**
+     * @return bool
+     */
+    public function isDisabled()
+    {
+        return $this->isConnected() && $this->status == "disabled";
+    }
+
+    public function isFull()
+    {
+        return $this->isDisabled() && $this->reason == "full";
+    }
+
+    /**
      * @param $redirectUrl
      *
      * @return mixed
@@ -79,6 +101,39 @@ abstract class AbstractConnection
     public function connect($redirectUrl = null)
     {
         return $this->provider()->authorize($redirectUrl, $this);
+    }
+
+    /**
+     * Ensures we have a valid and enabled connection. If it was disabled due to space full,
+     * see if we should check again.
+     */
+    public function verify()
+    {
+        if($this->isFull() && $this->disabledAt->diffInMinutes(Carbon::now()) > 60) {
+            if($this->percentFull() < 99) {
+                $this->enable();
+            }
+        }
+
+        return $this->isEnabled();
+    }
+
+    /**
+     * @return float
+     */
+    public function percentFull()
+    {
+        return $this->provider()->percentFull();
+    }
+
+    /**
+     * @throws ConnectionUnavailableException
+     */
+    public function verifyOrFail()
+    {
+        if(!$this->verify()) {
+            throw new ConnectionUnavailableException($this);
+        }
     }
 
     /**
@@ -132,8 +187,16 @@ abstract class AbstractConnection
     {
         $this->config = $config;
 
-        if(isset($this->config['lastUpload'])) {
-            $this->config['lastUpload'] = new Carbon($this->config['lastUpload']['date'], $this->config['lastUpload']['timezone']);
+        if(isset($this->config['lastUploadAt'])) {
+            $this->config['lastUploadAt'] = new Carbon($this->config['lastUploadAt']['date'], $this->config['lastUploadAt']['timezone']);
+        }
+
+        if(isset($this->config['disabledAt'])) {
+            $this->config['disabledAt'] = new Carbon($this->config['disabledAt']['date'], $this->config['disabledAt']['timezone']);
+        }
+
+        if(!isset($this->config['status'])) {
+            $this->config['status'] = "enabled";
         }
 
         return $this;
@@ -192,33 +255,6 @@ abstract class AbstractConnection
     }
 
     /**
-     * @return string
-     */
-    public function __toString()
-    {
-        return $this->serialize();
-    }
-
-    /**
-     * @param $key
-     *
-     * @return mixed
-     */
-    public function __get( $key )
-    {
-        return array_get($this->config, $key);
-    }
-
-    /**
-     * @param $key
-     * @param $value
-     */
-    public function __set( $key, $value )
-    {
-        array_set($this->config, $key, $value);
-    }
-
-    /**
      * @param $message
      * @param $exception
      * @param $sourcePath
@@ -243,15 +279,33 @@ abstract class AbstractConnection
     /**
      * @param $message
      * @param $reason
+     *
+     * @return $this
      */
-    protected function disable( $message, $reason )
+    public function disable( $message, $reason )
     {
         $this->status = "disabled";
         $this->reason = $reason;
+        $this->disabledAt = new Carbon();
 
         $this->save();
 
         event(new ConnectionDisabled($this, $reason, $message));
+
+        return $this;
+    }
+
+    /**
+     * @return $this
+     */
+    public function enable()
+    {
+        $this->status = "enabled";
+        array_forget($this->config, ['reason', 'disabledAt']);
+
+        $this->save();
+
+        return $this;
     }
 
     /**
@@ -260,9 +314,12 @@ abstract class AbstractConnection
      * @param bool $queued
      *
      * @return bool
+     * @throws ConnectionUnavailableException
      */
     public function upload( $sourcePath, $remotePath, $queued = true )
     {
+        $this->verifyOrFail();
+
         if ($queued) {
             return Queue::push(new UploadFile($sourcePath, $remotePath, $this));
         }
@@ -274,7 +331,7 @@ abstract class AbstractConnection
         try {
             $this->provider->upload($sourcePath, $remotePath);
 
-            $this->lastUpload = new Carbon();
+            $this->lastUploadAt = new Carbon();
             $this->save();
 
             event(new UploadSucceeded($this, $sourcePath, $remotePath));
@@ -320,5 +377,32 @@ abstract class AbstractConnection
     public function __wakeup()
     {
         $this->provider = app('sts.storage-connect')->driver($this->providerName);
+    }
+
+    /**
+     * @return string
+     */
+    public function __toString()
+    {
+        return $this->serialize();
+    }
+
+    /**
+     * @param $key
+     *
+     * @return mixed
+     */
+    public function __get( $key )
+    {
+        return array_get($this->config, $key);
+    }
+
+    /**
+     * @param $key
+     * @param $value
+     */
+    public function __set( $key, $value )
+    {
+        array_set($this->config, $key, $value);
     }
 }

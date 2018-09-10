@@ -55,7 +55,6 @@ class GoogleProvider extends Provider implements ProviderContract
     protected function mapUserToConnectionConfig( User $user )
     {
         return [
-            'status' => 'active',
             'name'   => $user->name,
             'email'  => $user->email,
             'token'  => $user->accessTokenResponseBody
@@ -193,6 +192,16 @@ class GoogleProvider extends Provider implements ProviderContract
             'spaces' => 'drive',
             'fields' => 'files(id, name)',
         ]))->first();
+    }
+
+    /**
+     * @return float
+     */
+    public function percentFull()
+    {
+        $about = $this->service()->about->get();
+
+        return round(($about->getQuotaBytesUsed() / $about->getQuotaBytesTotal()) * 100, 1);
     }
 
     /**

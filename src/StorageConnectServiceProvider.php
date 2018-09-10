@@ -3,6 +3,8 @@
 namespace STS\StorageConnect;
 
 use Illuminate\Support\ServiceProvider;
+use STS\StorageConnect\Events\ConnectionDisabled;
+use STS\StorageConnect\Events\ConnectionEnabled;
 use STS\StorageConnect\Events\RetryingUpload;
 use STS\StorageConnect\Events\StorageConnected;
 use STS\StorageConnect\Events\UploadFailed;
@@ -77,9 +79,22 @@ class StorageConnectServiceProvider extends ServiceProvider
             ]);
         });
 
-        $this->app['events']->listen(RetryingUpload::class, function (UploadFailed $event) {
+        $this->app['events']->listen(UploadFailed::class, function (UploadFailed $event) {
             $this->app['log']->error($event->message, [
                 'source'     => $event->sourcePath,
+                'connection' => $event->connection->identify()
+            ]);
+        });
+
+        $this->app['events']->listen(ConnectionDisabled::class, function (ConnectionDisabled $event) {
+            $this->app['log']->warning("Connection disabled: " . $event->message, [
+                'reason'     => $event->reason,
+                'connection' => $event->connection->identify()
+            ]);
+        });
+
+        $this->app['events']->listen(ConnectionEnabled::class, function (ConnectionEnabled $event) {
+            $this->app['log']->info("Connection enabled", [
                 'connection' => $event->connection->identify()
             ]);
         });

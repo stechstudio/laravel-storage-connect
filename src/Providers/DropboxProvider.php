@@ -10,14 +10,14 @@ use SocialiteProviders\Manager\OAuth2\User;
 use STS\StorageConnect\Connections\AbstractConnection;
 use STS\StorageConnect\Connections\DropboxConnection;
 use STS\StorageConnect\Traits\EnhancedProvider;
-use Kunnu\Dropbox\Dropbox as DropboxService;
+use Kunnu\Dropbox\Dropbox;
 
 class DropboxProvider extends Provider implements ProviderContract
 {
     use EnhancedProvider;
 
     /**
-     * @var DropboxService
+     * @var Dropbox
      */
     protected $service;
 
@@ -34,7 +34,6 @@ class DropboxProvider extends Provider implements ProviderContract
     protected function mapUserToConnectionConfig( User $user )
     {
         return [
-            'status' => 'active',
             'name'   => $user->user['name']['display_name'],
             'email'  => $user->user['email'],
             'token'  => $user->accessTokenResponseBody
@@ -59,11 +58,21 @@ class DropboxProvider extends Provider implements ProviderContract
     }
 
     /**
-     * @return DropboxService
+     * @return float
+     */
+    public function percentFull()
+    {
+        $usage = $this->service()->getSpaceUsage();
+
+        return round(($usage['used'] / $usage['allocation']['allocated']) * 100, 1);
+    }
+
+    /**
+     * @return Dropbox
      */
     protected function makeService()
     {
-        $service = new DropboxService(
+        $service = new Dropbox(
             new DropboxApp($this->fullConfig['client_id'], $this->fullConfig['client_secret']),
             ['random_string_generator' => 'openssl']
         );
