@@ -5,6 +5,7 @@ Route::prefix(config('storage-connect.route'))->middleware(config('storage-conne
     });
 
     Route::get('callback/{driver}', function($driver) {
+        dd(session()->all());
         return StorageConnect::driver($driver)->finish();
     });
 

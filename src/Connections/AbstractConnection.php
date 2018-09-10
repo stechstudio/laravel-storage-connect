@@ -51,6 +51,16 @@ abstract class AbstractConnection
     }
 
     /**
+     * @param $redirectUrl
+     *
+     * @return mixed
+     */
+    public function setup($redirectUrl)
+    {
+        return $this->provider()->setup($this, $redirectUrl);
+    }
+
+    /**
      * @param $owner
      *
      * @return $this
@@ -81,7 +91,7 @@ abstract class AbstractConnection
      */
     public function unserialize( $config )
     {
-        return $this->load(json_decode($config, true));
+        return $this->load((array) json_decode($config, true));
     }
 
     /**

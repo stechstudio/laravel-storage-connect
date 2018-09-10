@@ -32,13 +32,9 @@ trait ConnectsToCloudStorage
      */
     public function getStorageConnection( $driver)
     {
-        $config = $this->attributes[array_get($this->cloudStorageConnections, $driver)];
-
-        if(empty($config)) {
-            return null;
-        }
-
-        return StorageConnect::connection($driver)->belongsTo($this)->unserialize($config);
+        return StorageConnect::connection($driver)->belongsTo($this)->unserialize(
+            $this->attributes[array_get($this->cloudStorageConnections, $driver)]
+        );
     }
 
     /**

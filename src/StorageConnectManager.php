@@ -3,6 +3,7 @@ namespace STS\StorageConnect;
 
 use Illuminate\Support\Manager;
 use Illuminate\Support\Str;
+use Illuminate\Http\RedirectResponse;
 use InvalidArgumentException;
 use SocialiteProviders\Manager\OAuth2\User;
 use STS\StorageConnect\Connections\AbstractConnection;
@@ -20,9 +21,9 @@ use STS\StorageConnect\Providers\GoogleProvider;
 class StorageConnectManager extends Manager
 {
     /**
-     * @var callable
+     * @var array
      */
-    protected $stateCallback;
+    public static $includeState = [];
 
     /**
      * @var callable
@@ -75,7 +76,8 @@ class StorageConnectManager extends Manager
      */
     public function isSupportedDriver($driver)
     {
-        return in_array($driver, $this->app['config']['storage-connect.enabled']) && is_array($this->app['config']["services.$driver"]);
+        return in_array($driver, $this->app['config']['storage-connect.enabled'])
+            && is_array($this->app['config']["services.$driver"]);
     }
 
     /**
@@ -93,26 +95,6 @@ class StorageConnectManager extends Manager
     }
 
     /**
-     * @param callable $callback
-     */
-    public function includeWithState($callback)
-    {
-        $this->stateCallback = $callback;
-    }
-
-    /**
-     * @param $driver
-     *
-     * @return array
-     */
-    public function getCustomState($driver)
-    {
-        return isset($this->stateCallback)
-            ? (array) call_user_func($this->stateCallback, $driver)
-            : [];
-    }
-
-    /**
      * @param $callback
      */
     public function saveConnectedStorageUsing($callback)
@@ -123,12 +105,18 @@ class StorageConnectManager extends Manager
     /**
      * @param AbstractConnection $connection
      * @param $driver
+     *
+     * @return mixed
      */
     public function saveConnectedStorage(AbstractConnection $connection, $driver)
     {
-        call_user_func_array($this->saveCallback, [$connection, $driver]);
+        $response = call_user_func_array($this->saveCallback, [$connection, $driver]);
 
         event(new StorageConnected($connection, $driver));
+
+        return $response instanceof RedirectResponse
+            ? $response
+            : new RedirectResponse($this->app['config']->get('storage-connect.redirect_after_connect'));
     }
 
     /**

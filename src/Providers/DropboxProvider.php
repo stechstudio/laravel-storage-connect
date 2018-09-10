@@ -3,6 +3,8 @@
 namespace STS\StorageConnect\Providers;
 
 use Kunnu\Dropbox\DropboxApp;
+use Kunnu\Dropbox\Exceptions\DropboxClientException;
+use Kunnu\Dropbox\Models\FileMetadata;
 use SocialiteProviders\Dropbox\Provider;
 use SocialiteProviders\Manager\OAuth2\User;
 use STS\StorageConnect\Connections\AbstractConnection;
@@ -37,10 +39,16 @@ class DropboxProvider extends Provider implements ProviderContract
     /**
      * @param $sourcePath
      * @param $destinationPath
+     *
+     * @return FileMetadata|string
      */
     public function upload( $sourcePath, $destinationPath )
     {
-        $this->service()->upload($sourcePath, str_start($destinationPath, '/'), [
+        if(starts_with($sourcePath, "http")) {
+            return $this->service()->saveUrl($destinationPath, $sourcePath);
+        }
+
+        return $this->service()->upload($sourcePath, str_start($destinationPath, '/'), [
             'mode' => 'overwrite'
         ]);
     }
@@ -48,17 +56,15 @@ class DropboxProvider extends Provider implements ProviderContract
     /**
      * @return DropboxService
      */
-    public function service()
+    protected function makeService()
     {
-        if (!$this->service) {
-            $this->service = new DropboxService(
-                new DropboxApp($this->fullConfig['client_id'], $this->fullConfig['client_secret']),
-                ['random_string_generator' => 'openssl']
-            );
+        $service = new DropboxService(
+            new DropboxApp($this->fullConfig['client_id'], $this->fullConfig['client_secret']),
+            ['random_string_generator' => 'openssl']
+        );
 
-            $this->service->setAccessToken($this->connection->token['access_token']);
-        }
+        $service->setAccessToken($this->connection->token['access_token']);
 
-        return $this->service;
+        return $service;
     }
 }

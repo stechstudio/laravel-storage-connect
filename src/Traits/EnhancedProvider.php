@@ -70,7 +70,7 @@ trait EnhancedProvider
                     $this->app['request']->getHost()
                 )
             ),
-            $this->app['config']->get('storage-connect.route'),
+            $this->app['config']->get('storage-connect.path'),
             $this->name()
         );
     }
@@ -82,7 +82,7 @@ trait EnhancedProvider
     {
         return base64_encode(json_encode(array_merge(
             ['csrf' => str_random(40)],
-            $this->manager->getCustomState($this->name())
+            (array) $this->manager->includeState
         )));
     }
 
@@ -93,9 +93,7 @@ trait EnhancedProvider
     {
         $this->connection = $this->mapUserToConnection($this->user());
 
-        $this->manager->saveConnectedStorage($this->connection, $this->name());
-
-        return new RedirectResponse($this->app['config']->get('storage-connect.redirect_after_connect'));
+        return $this->manager->saveConnectedStorage($this->connection, $this->name());
     }
 
     /**
@@ -148,5 +146,31 @@ trait EnhancedProvider
         $this->connection = $connection;
 
         return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function service()
+    {
+        if (!$this->service) {
+            $this->service = $this->makeService();
+        }
+
+        return $this->service;
+    }
+
+    /**
+     * @param AbstractConnection $connection
+     * @param $redirectUrl
+     *
+     * @return mixed
+     */
+    public function setup(AbstractConnection $connection, $redirectUrl)
+    {
+        $this->request->session()->put('storage-connect.connection', $connection);
+        $this->request->session()->put('storage-connect.redirect', $redirectUrl);
+
+        return $this->redirect();
     }
 }

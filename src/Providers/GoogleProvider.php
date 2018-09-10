@@ -193,18 +193,6 @@ class GoogleProvider extends Provider implements ProviderContract
     /**
      * @return Google_Service_Drive
      */
-    public function service()
-    {
-        if (!$this->service) {
-            $this->service = $this->makeService();
-        }
-
-        return $this->service;
-    }
-
-    /**
-     * @return Google_Service_Drive
-     */
     protected function makeService()
     {
         $client = new Google_Client([
