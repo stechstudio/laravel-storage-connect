@@ -44,9 +44,9 @@ class StorageConnectServiceProvider extends ServiceProvider
         });
         $this->app->alias(StorageConnectManager::class, 'sts.storage-connect');
 
-        $this->app->register(
-            \SocialiteProviders\Manager\ServiceProvider::class
-        );
+//        $this->app->register(
+//            \SocialiteProviders\Manager\ServiceProvider::class
+//        );
 
 //        $this->app['events']->listen(SocialiteWasCalled::class, function(SocialiteWasCalled $event) {
 //            $event->extendSocialite('dropbox', DropboxProvider::class);
