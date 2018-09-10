@@ -8,6 +8,12 @@ return [
     'app_name' => env('STORAGE_CONNECT_APP_NAME'),
 
     /**
+     * By default we don't log anything directly, we just fire off events. If you'd like us to
+     * log just turn this on.
+     */
+    'log_activity' => env('STORAGE_CONNECT_LOG_ACTIVITY', false),
+
+    /**
      * Default driver use anytime none is explicitly specified.
      */
     'default' => env('STORAGE_CONNECT_DEFAULT','dropbox'),
@@ -26,9 +32,8 @@ return [
 
     /**
      * This is used as the default redirect location after a successful oauth flow and
-     * storage connection. This can be overridden by passing a custom handler to
-     * StorageConnect::saveConnectedStorageUsing and returning a RedirectResponse
-     * from your closure.
+     * storage connection. This can be overridden by passing a redirect URL when calling
+     * $model->dropbox_connection->connect($redirectUrl) or StorageConnect::authorize($redirectUrl)
      */
     'redirect_after_connect' => '/',
 
@@ -38,5 +43,5 @@ return [
      * providers for some other use, and want to disable it fo StorageConnect, remove it from
      * this array.
      */
-    'enabled' => ['dropbox', 'google']
+    'enabled' => ['dropbox', 'google'],
 ];

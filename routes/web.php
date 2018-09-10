@@ -1,15 +1,14 @@
 <?php
-Route::prefix(config('storage-connect.route'))->middleware(config('storage-connect.middleware'))->group(function() {
+Route::prefix(config('storage-connect.path'))->middleware(config('storage-connect.middleware'))->group(function() {
     Route::get('authorize/{driver?}', function($driver) {
-        return StorageConnect::driver($driver)->redirect();
+        return StorageConnect::driver($driver)->authorize(request('redirect'));
+    });
+
+    Route::get('connect/{driver?}', function($driver) {
+        return Auth::user()->getStorageConnection($driver)->connect("/jobs/public");
     });
 
     Route::get('callback/{driver}', function($driver) {
-        dd(session()->all());
         return StorageConnect::driver($driver)->finish();
-    });
-
-    Route::get('test/{driver}', function($driver) {
-        dd(StorageConnect::load($driver)->upload("/Users/josephszobody/Downloads/Castaldo-43.jpg", "ReproConnect EFS/image.jpg"));
     });
 });

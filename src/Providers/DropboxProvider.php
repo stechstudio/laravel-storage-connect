@@ -22,18 +22,23 @@ class DropboxProvider extends Provider implements ProviderContract
     protected $service;
 
     /**
+     * @var string
+     */
+    protected $connectionClass = DropboxConnection::class;
+
+    /**
      * @param User $user
      *
-     * @return AbstractConnection
+     * @return array
      */
-    protected function mapUserToConnection( User $user )
+    protected function mapUserToConnectionConfig( User $user )
     {
-        return (new DropboxConnection($this))->load([
+        return [
             'status' => 'active',
             'name'   => $user->user['name']['display_name'],
             'email'  => $user->user['email'],
             'token'  => $user->accessTokenResponseBody
-        ]);
+        ];
     }
 
     /**

@@ -95,6 +95,14 @@ class StorageConnectManager extends Manager
     }
 
     /**
+     * @return array
+     */
+    public function getCustomState()
+    {
+        return self::$includeState;
+    }
+
+    /**
      * @param $callback
      */
     public function saveConnectedStorageUsing($callback)
@@ -110,13 +118,21 @@ class StorageConnectManager extends Manager
      */
     public function saveConnectedStorage(AbstractConnection $connection, $driver)
     {
-        $response = call_user_func_array($this->saveCallback, [$connection, $driver]);
+        call_user_func_array($this->saveCallback, [$connection, $driver]);
+    }
 
-        event(new StorageConnected($connection, $driver));
-
-        return $response instanceof RedirectResponse
-            ? $response
-            : new RedirectResponse($this->app['config']->get('storage-connect.redirect_after_connect'));
+    /**
+     * @param $redirectUrl
+     *
+     * @return RedirectResponse
+     */
+    public function redirectAfterConnect($redirectUrl = null)
+    {
+        return new RedirectResponse(
+            $redirectUrl == null
+                ? $this->app['config']->get('storage-connect.redirect_after_connect')
+                : $redirectUrl
+        );
     }
 
     /**

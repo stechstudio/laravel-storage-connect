@@ -24,14 +24,14 @@ class DropboxConnection extends AbstractConnection
     {
         // First check for connection failure
         if(str_contains($e->getMessage(), "Connection timed out")) {
-            return $this->retry("Connection timeout", $sourcePath);
+            return $this->retry("Connection timeout", $e, $sourcePath);
         }
 
         // See if we have a parseable error
         $error = json_decode($e->getMessage(), true);
 
         if(!is_array($error)) {
-            return $this->retry("Unknown error pushing EFS file to Dropbox: " . $e->getMessage(), $sourcePath);
+            return $this->retry("Unknown error uploading file to Dropbox: " . $e->getMessage(), $e, $sourcePath);
         }
 
         if(str_contains(array_get($error, 'error_summary'), "insufficient_space")) {
@@ -43,9 +43,9 @@ class DropboxConnection extends AbstractConnection
         }
 
         if(str_contains(array_get($error, 'error_summary'), 'too_many_write_operations')) {
-            return $this->retry("Hit rate limit", $sourcePath);
+            return $this->retry("Hit rate limit", $e, $sourcePath);
         }
 
-        $this->retry("Unknown Dropbox exception: " . $e->getMessage(), $sourcePath);
+        $this->retry("Unknown Dropbox exception: " . $e->getMessage(), $e, $sourcePath);
     }
 }

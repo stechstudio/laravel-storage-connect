@@ -5,10 +5,10 @@ namespace STS\StorageConnect\Events;
 use STS\StorageConnect\Connections\AbstractConnection;
 
 /**
- * Class RetryingUpload
+ * Class UploadSucceeded
  * @package STS\StorageConnect\Events
  */
-class RetryingUpload
+class UploadSucceeded
 {
     /**
      * @var AbstractConnection
@@ -18,31 +18,24 @@ class RetryingUpload
     /**
      * @var string
      */
-    public $message;
+    public $sourcePath;
 
     /**
      * @var string
      */
-    public $sourcePath;
+    public $destinationPath;
 
     /**
-     * @var \Exception
-     */
-    public $exception;
-
-    /**
-     * RetryingUpload constructor.
+     * UploadFailed constructor.
      *
      * @param AbstractConnection $connection
-     * @param                    $message
-     * @param $exception
      * @param                    $sourcePath
+     * @param $destinationPath
      */
-    public function __construct( AbstractConnection $connection, $message, $exception, $sourcePath )
+    public function __construct(AbstractConnection $connection, $sourcePath, $destinationPath)
     {
         $this->connection = $connection;
-        $this->message = $message;
         $this->sourcePath = $sourcePath;
-        $this->exception = $exception;
+        $this->destinationPath = $destinationPath;
     }
 }

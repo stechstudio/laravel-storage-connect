@@ -3,10 +3,10 @@
 namespace STS\StorageConnect;
 
 use Illuminate\Support\ServiceProvider;
-use SocialiteProviders\Dropbox\DropboxExtendSocialite;
-use SocialiteProviders\Manager\SocialiteWasCalled;
-use STS\StorageConnect\Providers\DropboxProvider;
-use STS\StorageConnect\Providers\GoogleProvider;
+use STS\StorageConnect\Events\RetryingUpload;
+use STS\StorageConnect\Events\StorageConnected;
+use STS\StorageConnect\Events\UploadFailed;
+use STS\StorageConnect\Events\UploadSucceeded;
 
 class StorageConnectServiceProvider extends ServiceProvider
 {
@@ -17,16 +17,12 @@ class StorageConnectServiceProvider extends ServiceProvider
     {
         if ($this->app->runningInConsole()) {
             $this->publishes([
-                __DIR__.'/../config/storage-connect.php' => config_path('storage-connect.php'),
+                __DIR__ . '/../config/storage-connect.php' => config_path('storage-connect.php'),
             ], 'config');
+        }
 
-            /*
-            $this->loadViewsFrom(__DIR__.'/../resources/views', 'skeleton');
-
-            $this->publishes([
-                __DIR__.'/../resources/views' => base_path('resources/views/vendor/skeleton'),
-            ], 'views');
-            */
+        if ($this->app['config']->get('storage-connect.log_activity') == true) {
+            $this->listenAndLog();
         }
     }
 
@@ -35,23 +31,14 @@ class StorageConnectServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        $this->mergeConfigFrom(__DIR__.'/../config/storage-connect.php', 'storage-connect');
+        $this->mergeConfigFrom(__DIR__ . '/../config/storage-connect.php', 'storage-connect');
 
-        $this->loadRoutesFrom(__DIR__.'/../routes/web.php');
+        $this->loadRoutesFrom(__DIR__ . '/../routes/web.php');
 
-        $this->app->singleton(StorageConnectManager::class, function($app) {
+        $this->app->singleton(StorageConnectManager::class, function ($app) {
             return new StorageConnectManager($app);
         });
         $this->app->alias(StorageConnectManager::class, 'sts.storage-connect');
-
-//        $this->app->register(
-//            \SocialiteProviders\Manager\ServiceProvider::class
-//        );
-
-//        $this->app['events']->listen(SocialiteWasCalled::class, function(SocialiteWasCalled $event) {
-//            $event->extendSocialite('dropbox', DropboxProvider::class);
-//            $event->extendSocialite('google', GoogleProvider::class);
-//        });
     }
 
     /**
@@ -62,5 +49,39 @@ class StorageConnectServiceProvider extends ServiceProvider
     public function provides()
     {
         return ['sts.storage-connect', StorageConnectManager::class];
+    }
+
+    /**
+     * Listen to our own events and log activity
+     */
+    protected function listenAndLog()
+    {
+        $this->app['events']->listen(StorageConnected::class, function (StorageConnected $event) {
+            $this->app['log']->info("New cloud storage connection", [
+                'connection' => $event->connection->identify()
+            ]);
+        });
+
+        $this->app['events']->listen(UploadSucceeded::class, function (UploadSucceeded $event) {
+            $this->app['log']->info("File uploaded to cloud storage", [
+                'connection'  => $event->connection->identify(),
+                'source'      => $event->sourcePath,
+                'destination' => $event->destinationPath
+            ]);
+        });
+
+        $this->app['events']->listen(RetryingUpload::class, function (RetryingUpload $event) {
+            $this->app['log']->warning($event->message, [
+                'source'     => $event->sourcePath,
+                'connection' => $event->connection->identify()
+            ]);
+        });
+
+        $this->app['events']->listen(RetryingUpload::class, function (UploadFailed $event) {
+            $this->app['log']->error($event->message, [
+                'source'     => $event->sourcePath,
+                'connection' => $event->connection->identify()
+            ]);
+        });
     }
 }

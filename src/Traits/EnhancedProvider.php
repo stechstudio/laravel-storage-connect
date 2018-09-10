@@ -4,8 +4,8 @@ namespace STS\StorageConnect\Traits;
 
 use Illuminate\Http\RedirectResponse;
 use SocialiteProviders\Manager\OAuth2\User;
-use StorageConnect;
 use STS\StorageConnect\Connections\AbstractConnection;
+use STS\StorageConnect\Events\StorageConnected;
 use STS\StorageConnect\StorageConnectManager;
 
 /**
@@ -82,7 +82,7 @@ trait EnhancedProvider
     {
         return base64_encode(json_encode(array_merge(
             ['csrf' => str_random(40)],
-            (array) $this->manager->includeState
+            (array) $this->manager->getCustomState()
         )));
     }
 
@@ -91,9 +91,27 @@ trait EnhancedProvider
      */
     public function finish()
     {
-        $this->connection = $this->mapUserToConnection($this->user());
+        $this->connection = $this->newConnection()->load($this->mapUserToConnectionConfig($this->user()));
 
-        return $this->manager->saveConnectedStorage($this->connection, $this->name());
+        $settings = $this->request->session()->pull('storage-connect');
+
+        if(array_has($settings, 'owner')) {
+            $this->connection->belongsTo(array_get($settings, 'owner'));
+        }
+
+        $this->connection->save();
+
+        event(new StorageConnected($this->connection, $this->name()));
+
+        return $this->manager->redirectAfterConnect(array_get($settings, 'redirect'));
+    }
+
+    /**
+     * @return mixed
+     */
+    protected function newConnection()
+    {
+        return (new $this->connectionClass($this));
     }
 
     /**
@@ -166,10 +184,18 @@ trait EnhancedProvider
      *
      * @return mixed
      */
-    public function setup(AbstractConnection $connection, $redirectUrl)
+    public function authorize($redirectUrl = null, $connection = null)
     {
-        $this->request->session()->put('storage-connect.connection', $connection);
-        $this->request->session()->put('storage-connect.redirect', $redirectUrl);
+        if($connection instanceof AbstractConnection) {
+            $this->request->session()->put('storage-connect', [
+                'connection' => $connection->name(),
+                'owner' => $connection->owner(),
+            ]);
+        }
+
+        if($redirectUrl != null) {
+            $this->request->session()->put('storage-connect.redirect', $redirectUrl);
+        }
 
         return $this->redirect();
     }

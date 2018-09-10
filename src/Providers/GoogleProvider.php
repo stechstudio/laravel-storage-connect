@@ -43,18 +43,23 @@ class GoogleProvider extends Provider implements ProviderContract
     protected $service;
 
     /**
+     * @var string
+     */
+    protected $connectionClass = GoogleConnection::class;
+
+    /**
      * @param User $user
      *
-     * @return AbstractConnection
+     * @return array
      */
-    protected function mapUserToConnection( User $user )
+    protected function mapUserToConnectionConfig( User $user )
     {
-        return (new GoogleConnection($this))->load([
+        return [
             'status' => 'active',
             'name'   => $user->name,
             'email'  => $user->email,
             'token'  => $user->accessTokenResponseBody
-        ]);
+        ];
     }
 
     /**

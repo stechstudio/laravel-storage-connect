@@ -2,11 +2,14 @@
 
 namespace STS\StorageConnect\Connections;
 
+use Carbon\Carbon;
 use Exception;
 use STS\Backoff\Backoff;
 use STS\Backoff\Strategies\PolynomialStrategy;
 use STS\StorageConnect\Events\ConnectionDisabled;
 use STS\StorageConnect\Events\RetryingUpload;
+use STS\StorageConnect\Events\UploadFailed;
+use STS\StorageConnect\Events\UploadSucceeded;
 use STS\StorageConnect\Jobs\UploadFile;
 use STS\StorageConnect\Providers\DropboxProvider;
 use Log;
@@ -25,9 +28,19 @@ abstract class AbstractConnection
     protected $owner;
 
     /**
+     * @var string
+     */
+    protected $name;
+
+    /**
      * @var array
      */
     protected $config = [];
+
+    /**
+     * @var string
+     */
+    protected $providerName;
 
     /**
      * @var DropboxProvider
@@ -51,13 +64,21 @@ abstract class AbstractConnection
     }
 
     /**
+     * @return bool
+     */
+    public function isConnected()
+    {
+        return (bool) count($this->config);
+    }
+
+    /**
      * @param $redirectUrl
      *
      * @return mixed
      */
-    public function setup($redirectUrl)
+    public function connect($redirectUrl = null)
     {
-        return $this->provider()->setup($this, $redirectUrl);
+        return $this->provider()->authorize($redirectUrl, $this);
     }
 
     /**
@@ -70,6 +91,14 @@ abstract class AbstractConnection
         $this->owner = $owner;
 
         return $this;
+    }
+
+    /**
+     * @return Illuminate\Database\Eloquent\Model
+     */
+    public function owner()
+    {
+        return $this->owner;
     }
 
     /**
@@ -103,6 +132,10 @@ abstract class AbstractConnection
     {
         $this->config = $config;
 
+        if(isset($this->config['lastUpload'])) {
+            $this->config['lastUpload'] = new Carbon($this->config['lastUpload']['date'], $this->config['lastUpload']['timezone']);
+        }
+
         return $this;
     }
 
@@ -112,7 +145,9 @@ abstract class AbstractConnection
     public function save()
     {
         if ($this->owner) {
-            $this->owner->setStorageConnection($this->name, $this);
+            $this->owner->setStorageConnection($this->name, $this)->save();
+        } else {
+            app('sts.storage-connect')->saveConnectedStorage($this, $this->name());
         }
 
         return $this;
@@ -149,11 +184,11 @@ abstract class AbstractConnection
     /**
      * @return string
      */
-    public function indentify()
+    public function identify()
     {
         return $this->owner
-            ? (new \ReflectionClass($this->owner))->getShortName() . ":" . $this->owner->getKey()
-            : $this->email;
+            ? $this->name() . ':' . (new \ReflectionClass($this->owner))->getShortName() . ":" . $this->owner->getKey()
+            : $this->name() . ':' . $this->email;
     }
 
     /**
@@ -185,12 +220,13 @@ abstract class AbstractConnection
 
     /**
      * @param $message
+     * @param $exception
      * @param $sourcePath
      */
-    protected function retry( $message, $sourcePath )
+    protected function retry( $message, $exception, $sourcePath )
     {
         if ($this->job) {
-            event(new RetryingUpload($this, $message, $sourcePath));
+            event(new RetryingUpload($this, $message, $exception, $sourcePath));
 
             $this->job->release(
                 (new Backoff)
@@ -200,7 +236,7 @@ abstract class AbstractConnection
                     ->getWaitTime($this->job->attempts())
             );
         } else {
-            event(new UploadFailed($this, $message, $sourcePath));
+            event(new UploadFailed($this, $message, $exception, $sourcePath));
         }
     }
 
@@ -210,12 +246,12 @@ abstract class AbstractConnection
      */
     protected function disable( $message, $reason )
     {
-        event(new ConnectionDisabled($this, $reason, $message));
-
         $this->status = "disabled";
         $this->reason = $reason;
 
         $this->save();
+
+        event(new ConnectionDisabled($this, $reason, $message));
     }
 
     /**
@@ -238,11 +274,51 @@ abstract class AbstractConnection
         try {
             $this->provider->upload($sourcePath, $remotePath);
 
+            $this->lastUpload = new Carbon();
+            $this->save();
+
+            event(new UploadSucceeded($this, $sourcePath, $remotePath));
+
             return true;
         } catch (Exception $e) {
             $this->handleUploadError($e, $sourcePath);
         }
     }
 
+    /**
+     * @param Exception $e
+     * @param $sourcePath
+     *
+     * @return mixed
+     */
     abstract protected function handleUploadError(Exception $e, $sourcePath);
+
+    /**
+     * @return string
+     */
+    public function name()
+    {
+        return $this->name;
+    }
+
+    /**
+     * The provider has an instance of the Laravel application, as well as
+     * the StorageConnectManager, both of which contain Closures. So before
+     * we are serialized, detach all this.
+     */
+    public function __sleep()
+    {
+        $this->providerName = $this->provider->name();
+        $this->provider = null;
+
+        return array_keys(get_object_vars($this));
+    }
+
+    /**
+     * After being unserialized create a fresh provider connection
+     */
+    public function __wakeup()
+    {
+        $this->provider = app('sts.storage-connect')->driver($this->providerName);
+    }
 }
