@@ -5,10 +5,13 @@ namespace STS\StorageConnect\Connections;
 use Exception;
 use STS\Backoff\Backoff;
 use STS\Backoff\Strategies\PolynomialStrategy;
+use STS\StorageConnect\Events\ConnectionDisabled;
+use STS\StorageConnect\Events\RetryingUpload;
 use STS\StorageConnect\Jobs\UploadFile;
 use STS\StorageConnect\Providers\DropboxProvider;
 use Log;
 use Queue;
+use AWS;
 
 /**
  * Class AbstractConnection
@@ -172,17 +175,13 @@ abstract class AbstractConnection
 
     /**
      * @param $message
-     * @param $localPath
+     * @param $sourcePath
      */
-    protected function retry( $message, $localPath )
+    protected function retry( $message, $sourcePath )
     {
-        Log::warning($message, [
-            "path"       => $localPath,
-            "driver"     => $this->name,
-            "connection" => $this->identify()
-        ]);
-
         if ($this->job) {
+            event(new RetryingUpload($this, $message, $sourcePath));
+
             $this->job->release(
                 (new Backoff)
                     ->setStrategy(new PolynomialStrategy(5, 3))
@@ -190,6 +189,8 @@ abstract class AbstractConnection
                     ->setJitter(true)
                     ->getWaitTime($this->job->attempts())
             );
+        } else {
+            event(new UploadFailed($this, $message, $sourcePath));
         }
     }
 
@@ -199,10 +200,7 @@ abstract class AbstractConnection
      */
     protected function disable( $message, $reason )
     {
-        Log::error($message, [
-            "driver"     => $this->name,
-            "connection" => $this->identify()
-        ]);
+        event(new ConnectionDisabled($this, $reason, $message));
 
         $this->status = "disabled";
         $this->reason = $reason;
@@ -221,6 +219,10 @@ abstract class AbstractConnection
     {
         if ($queued) {
             return Queue::push(new UploadFile($sourcePath, $remotePath, $this));
+        }
+
+        if(starts_with($sourcePath, "s3://")) {
+            AWS::createClient('s3')->registerStreamWrapper();
         }
 
         try {

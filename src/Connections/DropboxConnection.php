@@ -35,15 +35,15 @@ class DropboxConnection extends AbstractConnection
         }
 
         if(str_contains(array_get($error, 'error_summary'), "insufficient_space")) {
-            return $this->disable("Dropbox account is full, disabling", "full");
+            return $this->disable("Dropbox account is full", "full");
         }
 
         if(str_contains(array_get($error, 'error_summary'), "invalid_access_token")) {
-            return $this->disable("Dropbox integration is invalid, disabling", "invalid");
+            return $this->disable("Dropbox integration is invalid", "invalid");
         }
 
         if(str_contains(array_get($error, 'error_summary'), 'too_many_write_operations')) {
-            return $this->retry("Getting rate limited", $sourcePath);
+            return $this->retry("Hit rate limit", $sourcePath);
         }
 
         $this->retry("Unknown Dropbox exception: " . $e->getMessage(), $sourcePath);

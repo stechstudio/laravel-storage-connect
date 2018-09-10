@@ -1,4 +1,5 @@
 <?php
+
 namespace STS\StorageConnect\Providers;
 
 use Google_Client;
@@ -78,14 +79,11 @@ class GoogleProvider extends Provider implements ProviderContract
             return $this->uploadChunked($sourcePath, $file, $filesize, $folderId);
         }
 
-        return $this->service()->files->create(
-            $file,
-            [
-                'data' => file_get_contents($sourcePath),
-                'mimeType' => mime_content_type($sourcePath),
-                'uploadType' => 'media',
-            ]
-        )->id;
+        return $this->service()->files->create($file, [
+            'data'       => file_get_contents($sourcePath),
+            'mimeType'   => mime_content_type($sourcePath),
+            'uploadType' => 'media',
+        ])->id;
     }
 
     /**
@@ -127,7 +125,7 @@ class GoogleProvider extends Provider implements ProviderContract
     }
 
     /**
-     * @param array       $folders
+     * @param array  $folders
      * @param string $parentFolderId
      *
      * @return mixed
@@ -136,7 +134,7 @@ class GoogleProvider extends Provider implements ProviderContract
     {
         $foldername = array_shift($folders);
 
-        if(!$folder = $this->folderExists($foldername, $parentFolderId)) {
+        if (!$folder = $this->folderExists($foldername, $parentFolderId)) {
             $fileMetadata = new Google_Service_Drive_DriveFile([
                 'name'     => $foldername,
                 'parents'  => [$parentFolderId],
@@ -154,17 +152,17 @@ class GoogleProvider extends Provider implements ProviderContract
     }
 
     /**
-     * @param      $name
+     * @param        $name
      * @param string $parentFolderId
      *
      * @return mixed
      */
-    protected function folderExists($name, $parentFolderId = 'root')
+    protected function folderExists( $name, $parentFolderId = 'root' )
     {
         $name = str_replace("'", "", $name);
 
         return collect($this->service()->files->listFiles([
-            'q' => "mimeType = 'application/vnd.google-apps.folder' and name = '$name' and trashed = false  and '$parentFolderId' in parents",
+            'q'      => "mimeType = 'application/vnd.google-apps.folder' and name = '$name' and trashed = false  and '$parentFolderId' in parents",
             'spaces' => 'drive',
             'fields' => 'files(id, name)',
         ]))->first();
