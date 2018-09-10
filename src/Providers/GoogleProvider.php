@@ -65,30 +65,47 @@ class GoogleProvider extends Provider implements ProviderContract
      */
     public function upload( $sourcePath, $destinationPath )
     {
-        $folderId = $this->prepareFolders(
-            array_prepend(
-                explode("/", ltrim(dirname($destinationPath), "/")),
-                $this->manager->appName()
-            )
-        );
-        $filename = basename($destinationPath);
+        $file = $this->prepareFile($sourcePath, $destinationPath);
         $filesize = filesize($sourcePath);
 
-        $file = new Google_Service_Drive_DriveFile([
-            'name'     => $filename,
-            'parents'  => [$folderId],
-            'mimeType' => mime_content_type($sourcePath)
-        ]);
-
         if ($filesize >= 5 * 1024 * 1024) {
-            return $this->uploadChunked($sourcePath, $file, $filesize, $folderId);
+            return $this->uploadChunked($sourcePath, $file, $filesize);
         }
 
         return $this->service()->files->create($file, [
             'data'       => file_get_contents($sourcePath),
-            'mimeType'   => mime_content_type($sourcePath),
+            'mimeType'   => $file->getMimeType(),
             'uploadType' => 'media',
         ])->id;
+    }
+
+    /**
+     * @param $sourcePath
+     * @param $destinationPath
+     *
+     * @return Google_Service_Drive_DriveFile
+     */
+    protected function prepareFile( $sourcePath, $destinationPath )
+    {
+        $folderId = $this->getFolderIdForPath($this->manager->appName() . "/" . dirname($destinationPath));
+
+        return new Google_Service_Drive_DriveFile([
+            'name'     => basename($destinationPath),
+            'parents'  => [$folderId],
+            'mimeType' => mime_content_type($sourcePath)
+        ]);
+    }
+
+    /**
+     * @param $path
+     *
+     * @return mixed
+     */
+    protected function getFolderIdForPath( $path )
+    {
+        return $this->prepareFolderTree(
+            array_filter(explode("/", $path))
+        );
     }
 
     /**
@@ -135,7 +152,7 @@ class GoogleProvider extends Provider implements ProviderContract
      *
      * @return mixed
      */
-    protected function prepareFolders( array $folders, $parentFolderId = 'root' )
+    protected function prepareFolderTree( array $folders, $parentFolderId = 'root' )
     {
         $foldername = array_shift($folders);
 
