@@ -48,11 +48,13 @@ class DropboxProvider extends Provider implements ProviderContract
      */
     public function upload( $sourcePath, $destinationPath )
     {
+        $destinationPath = str_start($destinationPath, '/');
+
         if(starts_with($sourcePath, "http")) {
             return $this->service()->saveUrl($destinationPath, $sourcePath);
         }
 
-        return $this->service()->upload($sourcePath, str_start($destinationPath, '/'), [
+        return $this->service()->upload($sourcePath, $destinationPath, [
             'mode' => 'overwrite'
         ]);
     }

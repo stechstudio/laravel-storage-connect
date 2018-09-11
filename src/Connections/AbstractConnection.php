@@ -7,6 +7,7 @@ use Exception;
 use STS\Backoff\Backoff;
 use STS\Backoff\Strategies\PolynomialStrategy;
 use STS\StorageConnect\Events\ConnectionDisabled;
+use STS\StorageConnect\Events\ConnectionEnabled;
 use STS\StorageConnect\Events\RetryingUpload;
 use STS\StorageConnect\Events\UploadFailed;
 use STS\StorageConnect\Events\UploadSucceeded;
@@ -65,6 +66,16 @@ abstract class AbstractConnection
     }
 
     /**
+     * @param $redirectUrl
+     *
+     * @return mixed
+     */
+    public function connect($redirectUrl = null)
+    {
+        return $this->provider()->authorize($redirectUrl, $this);
+    }
+
+    /**
      * @return bool
      */
     public function isConnected()
@@ -94,13 +105,11 @@ abstract class AbstractConnection
     }
 
     /**
-     * @param $redirectUrl
-     *
-     * @return mixed
+     * @return float
      */
-    public function connect($redirectUrl = null)
+    public function percentFull()
     {
-        return $this->provider()->authorize($redirectUrl, $this);
+        return $this->provider()->percentFull();
     }
 
     /**
@@ -109,21 +118,21 @@ abstract class AbstractConnection
      */
     public function verify()
     {
-        if($this->isFull() && $this->disabledAt->diffInMinutes(Carbon::now()) > 60) {
-            if($this->percentFull() < 99) {
-                $this->enable();
-            }
+        if($this->isFull() && $this->quotaLastCheckedAt->diffInMinutes(Carbon::now()) > 60) {
+            $this->checkStorageQuota();
         }
 
         return $this->isEnabled();
     }
 
-    /**
-     * @return float
-     */
-    public function percentFull()
+    public function checkStorageQuota()
     {
-        return $this->provider()->percentFull();
+        if($this->percentFull() < 99) {
+            $this->enable();
+        } else {
+            $this->quotaLastCheckedAt = Carbon::now();
+            $this->save();
+        }
     }
 
     /**
@@ -187,12 +196,10 @@ abstract class AbstractConnection
     {
         $this->config = $config;
 
-        if(isset($this->config['lastUploadAt'])) {
-            $this->config['lastUploadAt'] = new Carbon($this->config['lastUploadAt']['date'], $this->config['lastUploadAt']['timezone']);
-        }
-
-        if(isset($this->config['disabledAt'])) {
-            $this->config['disabledAt'] = new Carbon($this->config['disabledAt']['date'], $this->config['disabledAt']['timezone']);
+        foreach(['lastUploadAt', 'disabledAt', 'quotaLastCheckedAt'] as $dtField) {
+            if(isset($this->config[$dtField])) {
+                $this->config[$dtField] = new Carbon($this->config[$dtField]['date'], $this->config[$dtField]['timezone']);
+            }
         }
 
         if(!isset($this->config['status'])) {
@@ -255,6 +262,44 @@ abstract class AbstractConnection
     }
 
     /**
+     * @param      $sourcePath
+     * @param      $remotePath
+     * @param bool $queued
+     *
+     * @return bool
+     * @throws ConnectionUnavailableException
+     */
+    public function upload( $sourcePath, $remotePath, $queued = true )
+    {
+        $this->verifyOrFail();
+
+        if ($queued) {
+            return Queue::push(new UploadFile($sourcePath, $remotePath, $this));
+        }
+
+        if(starts_with($sourcePath, "s3://")) {
+            app('aws')->createClient('s3')->registerStreamWrapper();
+        }
+
+        try {
+            $this->provider->upload($sourcePath, $remotePath);
+
+            $this->lastUploadAt = new Carbon();
+            $this->save();
+
+            event(new UploadSucceeded($this, $sourcePath, $remotePath));
+
+            return true;
+        } catch (Exception $e) {
+            $this->handleUploadError($e, $sourcePath);
+
+            if (!$this->job) {
+                throw $e;
+            }
+        }
+    }
+
+    /**
      * @param $message
      * @param $exception
      * @param $sourcePath
@@ -288,6 +333,10 @@ abstract class AbstractConnection
         $this->reason = $reason;
         $this->disabledAt = new Carbon();
 
+        if($reason == "full") {
+            $this->quotaLastCheckedAt = Carbon::now();
+        }
+
         $this->save();
 
         event(new ConnectionDisabled($this, $reason, $message));
@@ -301,45 +350,13 @@ abstract class AbstractConnection
     public function enable()
     {
         $this->status = "enabled";
-        array_forget($this->config, ['reason', 'disabledAt']);
+        array_forget($this->config, ['reason', 'disabledAt', 'quotaLastCheckedAt']);
 
         $this->save();
 
+        event(new ConnectionEnabled($this));
+
         return $this;
-    }
-
-    /**
-     * @param      $sourcePath
-     * @param      $remotePath
-     * @param bool $queued
-     *
-     * @return bool
-     * @throws ConnectionUnavailableException
-     */
-    public function upload( $sourcePath, $remotePath, $queued = true )
-    {
-        $this->verifyOrFail();
-
-        if ($queued) {
-            return Queue::push(new UploadFile($sourcePath, $remotePath, $this));
-        }
-
-        if(starts_with($sourcePath, "s3://")) {
-            AWS::createClient('s3')->registerStreamWrapper();
-        }
-
-        try {
-            $this->provider->upload($sourcePath, $remotePath);
-
-            $this->lastUploadAt = new Carbon();
-            $this->save();
-
-            event(new UploadSucceeded($this, $sourcePath, $remotePath));
-
-            return true;
-        } catch (Exception $e) {
-            $this->handleUploadError($e, $sourcePath);
-        }
     }
 
     /**
