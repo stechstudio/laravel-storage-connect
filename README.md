@@ -84,6 +84,7 @@ Stick these in your AppServiceProvider `boot` method:
 
 ```php
 StorageConnect::saveConnectedStorageUsing(function($connection, $driver) {
+    // Store the connection wherever you want, for example in the app `storage` directory 
     Storage::put($driver . '_connection.json', $connection);
 });
 
