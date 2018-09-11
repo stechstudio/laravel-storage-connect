@@ -60,13 +60,33 @@ trait EnhancedProvider
     {
         return sprintf("https://%s/%s/callback/%s",
             config('storage-connect.callback_domain',
-                array_get($this->fullConfig, 'callback_domain',
-                    $request->getHost()
-                )
+                array_get($this->fullConfig, 'callback_domain', $request->getHost())
             ),
             config('storage-connect.path'),
             $this->name()
         );
+    }
+
+    /**
+     * @param AbstractConnection $connection
+     * @param $redirectUrl
+     *
+     * @return mixed
+     */
+    public function authorize($redirectUrl = null, $connection = null)
+    {
+        if($connection instanceof AbstractConnection) {
+            $this->request->session()->put('storage-connect', [
+                'connection' => $connection->name(),
+                'owner' => $connection->owner(),
+            ]);
+        }
+
+        if($redirectUrl != null) {
+            $this->request->session()->put('storage-connect.redirect', $redirectUrl);
+        }
+
+        return $this->redirect();
     }
 
     /**
@@ -94,7 +114,6 @@ trait EnhancedProvider
         }
 
         $this->connection->save();
-
         event(new StorageConnected($this->connection, $this->name()));
 
         return $this->manager->redirectAfterConnect(array_get($settings, 'redirect'));
@@ -170,27 +189,5 @@ trait EnhancedProvider
         }
 
         return $this->service;
-    }
-
-    /**
-     * @param AbstractConnection $connection
-     * @param $redirectUrl
-     *
-     * @return mixed
-     */
-    public function authorize($redirectUrl = null, $connection = null)
-    {
-        if($connection instanceof AbstractConnection) {
-            $this->request->session()->put('storage-connect', [
-                'connection' => $connection->name(),
-                'owner' => $connection->owner(),
-            ]);
-        }
-
-        if($redirectUrl != null) {
-            $this->request->session()->put('storage-connect.redirect', $redirectUrl);
-        }
-
-        return $this->redirect();
     }
 }
