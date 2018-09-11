@@ -4,6 +4,7 @@ namespace STS\StorageConnect\Connections;
 
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Http\RedirectResponse;
 use STS\Backoff\Backoff;
 use STS\Backoff\Strategies\PolynomialStrategy;
 use STS\StorageConnect\Events\ConnectionDisabled;
@@ -73,6 +74,14 @@ abstract class AbstractConnection
     public function authorize($redirectUrl = null)
     {
         return $this->provider()->authorize($redirectUrl, $this);
+    }
+
+    /**
+     * @return RedirectResponse
+     */
+    public function finish()
+    {
+        return $this->provider()->finish();
     }
 
     /**
@@ -197,7 +206,7 @@ abstract class AbstractConnection
         $this->config = $config;
 
         foreach(['createdAt', 'lastUploadAt', 'disabledAt', 'quotaLastCheckedAt'] as $dtField) {
-            if(isset($this->config[$dtField])) {
+            if(isset($this->config[$dtField]) && is_array($this->config[$dtField])) {
                 $this->config[$dtField] = new Carbon($this->config[$dtField]['date'], $this->config[$dtField]['timezone']);
             }
         }

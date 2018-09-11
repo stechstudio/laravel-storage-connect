@@ -75,11 +75,8 @@ trait EnhancedProvider
      */
     public function authorize($redirectUrl = null, $connection = null)
     {
-        if($connection instanceof AbstractConnection) {
-            $this->request->session()->put('storage-connect', [
-                'connection' => $connection->name(),
-                'owner' => $connection->owner(),
-            ]);
+        if($connection instanceof AbstractConnection && $connection->owner()) {
+            $this->request->session()->put('storage-connect.owner', $connection->owner());
         }
 
         if($redirectUrl != null) {
@@ -105,7 +102,7 @@ trait EnhancedProvider
      */
     public function finish()
     {
-        $this->connection = $this->newConnection($this->mapUserToConnectionConfig($this->user()));
+        $this->connection->initialize($this->mapUserToConnectionConfig($this->user()));
 
         $settings = $this->request->session()->pull('storage-connect');
 
@@ -117,14 +114,6 @@ trait EnhancedProvider
         event(new StorageConnected($this->connection, $this->name()));
 
         return $this->manager->redirectAfterConnect(array_get($settings, 'redirect'));
-    }
-
-    /**
-     * @return mixed
-     */
-    protected function newConnection($config)
-    {
-        return (new $this->connectionClass($this))->initialize($config);
     }
 
     /**

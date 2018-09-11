@@ -27,30 +27,30 @@ trait ConnectsToCloudStorage
     }
 
     /**
-     * @param $driver
+     * @param $provider
      *
      * @return null
      */
-    public function getStorageConnection($driver)
+    public function getStorageConnection($provider)
     {
-        return StorageConnect::connection($driver)->belongsTo($this)->unserialize(
-            $this->attributes[array_get($this->cloudStorageConnections, $driver)]
+        return StorageConnect::connection($provider)->belongsTo($this)->unserialize(
+            $this->attributes[array_get($this->cloudStorageConnections, $provider)]
         );
     }
 
     /**
-     * @param $driver
+     * @param $provider
      * @param $connection
      *
      * @return null
      */
-    public function setStorageConnection($driver, $connection)
+    public function setStorageConnection($provider, $connection)
     {
-        if (!array_key_exists($driver, $this->cloudStorageConnections)) {
+        if (!array_key_exists($provider, $this->cloudStorageConnections)) {
             return null;
         }
 
-        $this->attributes[array_get($this->cloudStorageConnections, $driver)] = (string)$connection;
+        $this->attributes[array_get($this->cloudStorageConnections, $provider)] = (string)$connection;
 
         return $this;
     }

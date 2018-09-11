@@ -148,7 +148,7 @@ class StorageConnectManager extends Manager
      *
      * @return mixed
      */
-    public function load($driver)
+    public function load($driver = null)
     {
         return $this->connection($driver)
             ->load(call_user_func($this->loadCallback, $driver));
@@ -221,5 +221,17 @@ class StorageConnectManager extends Manager
         }
 
         return $this->app['config']->get('app.name');
+    }
+
+    /**
+     * Dynamically call the default connection instance.
+     *
+     * @param  string  $method
+     * @param  array   $parameters
+     * @return mixed
+     */
+    public function __call($method, $parameters)
+    {
+        return $this->load()->$method(...$parameters);
     }
 }
