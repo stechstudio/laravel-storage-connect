@@ -196,17 +196,26 @@ abstract class AbstractConnection
     {
         $this->config = $config;
 
-        foreach(['lastUploadAt', 'disabledAt', 'quotaLastCheckedAt'] as $dtField) {
+        foreach(['createdAt', 'lastUploadAt', 'disabledAt', 'quotaLastCheckedAt'] as $dtField) {
             if(isset($this->config[$dtField])) {
                 $this->config[$dtField] = new Carbon($this->config[$dtField]['date'], $this->config[$dtField]['timezone']);
             }
         }
 
-        if(!isset($this->config['status'])) {
-            $this->config['status'] = "enabled";
-        }
-
         return $this;
+    }
+
+    /**
+     * @param array $config
+     *
+     * @return $this
+     */
+    public function initialize( array $config )
+    {
+        return $this->load(array_merge($config, [
+            'status' => 'enabled',
+            'createdAt' => Carbon::now()
+        ]));
     }
 
     /**
@@ -411,7 +420,7 @@ abstract class AbstractConnection
      */
     public function __get( $key )
     {
-        return array_get($this->config, $key);
+        return array_get($this->config, $key, array_get($this->config, camel_case($key)));
     }
 
     /**

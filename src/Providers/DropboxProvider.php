@@ -3,11 +3,9 @@
 namespace STS\StorageConnect\Providers;
 
 use Kunnu\Dropbox\DropboxApp;
-use Kunnu\Dropbox\Exceptions\DropboxClientException;
 use Kunnu\Dropbox\Models\FileMetadata;
 use SocialiteProviders\Dropbox\Provider;
 use SocialiteProviders\Manager\OAuth2\User;
-use STS\StorageConnect\Connections\AbstractConnection;
 use STS\StorageConnect\Connections\DropboxConnection;
 use STS\StorageConnect\Traits\EnhancedProvider;
 use Kunnu\Dropbox\Dropbox;

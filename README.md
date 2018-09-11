@@ -1,6 +1,6 @@
 # Laravel Storage Connect
 
-This package drastically simplifies the process of authenticating to a user's cloud storage account and sending files to that cloud storage.
+This package drastically simplifies the process of authenticating to a user's cloud storage account uploading files.
 
 What this does:
  

@@ -8,7 +8,6 @@ use Google_Service_Drive;
 use Google_Service_Drive_DriveFile;
 use SocialiteProviders\Google\Provider;
 use SocialiteProviders\Manager\OAuth2\User;
-use STS\StorageConnect\Connections\AbstractConnection;
 use STS\StorageConnect\Connections\GoogleConnection;
 use STS\StorageConnect\Traits\EnhancedProvider;
 use Log;

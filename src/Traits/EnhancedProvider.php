@@ -25,11 +25,6 @@ trait EnhancedProvider
     protected $manager;
 
     /**
-     * @var \Illuminate\Foundation\Application
-     */
-    protected $app;
-
-    /**
      * @var User
      */
     protected $user;
@@ -50,11 +45,10 @@ trait EnhancedProvider
     {
         $this->fullConfig = $config;
         $this->manager = $manager;
-        $this->app = $app;
 
         parent::__construct(
-            $this->app['request'], $config['client_id'],
-            $config['client_secret'], $this->callbackUrl(),
+            $app['request'], $config['client_id'],
+            $config['client_secret'], $this->callbackUrl($app['request']),
             array_get($config, 'guzzle', [])
         );
     }
@@ -62,15 +56,15 @@ trait EnhancedProvider
     /**
      * @return string
      */
-    protected function callbackUrl()
+    protected function callbackUrl($request)
     {
         return sprintf("https://%s/%s/callback/%s",
-            $this->app['config']->get('storage-connect.callback_domain',
+            config('storage-connect.callback_domain',
                 array_get($this->fullConfig, 'callback_domain',
-                    $this->app['request']->getHost()
+                    $request->getHost()
                 )
             ),
-            $this->app['config']->get('storage-connect.path'),
+            config('storage-connect.path'),
             $this->name()
         );
     }
@@ -91,7 +85,7 @@ trait EnhancedProvider
      */
     public function finish()
     {
-        $this->connection = $this->newConnection()->load($this->mapUserToConnectionConfig($this->user()));
+        $this->connection = $this->newConnection($this->mapUserToConnectionConfig($this->user()));
 
         $settings = $this->request->session()->pull('storage-connect');
 
@@ -109,9 +103,9 @@ trait EnhancedProvider
     /**
      * @return mixed
      */
-    protected function newConnection()
+    protected function newConnection($config)
     {
-        return (new $this->connectionClass($this));
+        return (new $this->connectionClass($this))->initialize($config);
     }
 
     /**
