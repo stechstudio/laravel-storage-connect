@@ -21,21 +21,21 @@ return [
     /**
      * The base URI path we'll register for your authorize/callback endpoints
      */
-    'path' => 'storage-connect',
+    'path' => env('STORAGE_CONNECT_PATH', 'storage-connect'),
 
     /**
      * Specify one or more individual middlewares to be used on the authorize/callback
      * endpoints, or a middleware group. Make sure Illuminate\Session\Middleware\StartSession
      * is one of the middlewares included, that's used for CSRF during the oauth flow.
      */
-    'middleware' => 'web',
+    'middleware' => env('STORAGE_CONNECT_MIDDLEWARE', 'web'),
 
     /**
      * This is used as the default redirect location after a successful oauth flow and
      * storage connection. This can be overridden by passing a redirect URL when calling
      * $model->dropbox_connection->connect($redirectUrl) or StorageConnect::authorize($redirectUrl)
      */
-    'redirect_after_connect' => '/',
+    'redirect_after_connect' => env('STORAGE_CONNECT_REDIRECT_AFTER_CONNECT', '/'),
 
     /**
      * We'll only consider these truly enabled if they are setup in the Laravel 'services'

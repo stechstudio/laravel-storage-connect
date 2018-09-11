@@ -2,7 +2,17 @@
 
 This package drastically simplifies the process of authenticating to a user's cloud storage account and sending files to that cloud storage.
 
-## Installation
+What this does:
+ 
+ - Handles OAuth flow to authorize a cloud storage account
+ - Serializes and handles storing/loading of connection details
+ - Queues upload tasks
+ - Retries upload failures with increasing backoff
+ - Supports uploading from local filesystem, S3 hosted files (registers a stream wrapper), or any URL
+ - Automatically disables a connection if storage quota is full, and then re-enables if space is freed up
+ - Fires events for all activity, and can optionally log activity for you
+
+## Installation and setup
 
 You know the drill...
 
@@ -37,14 +47,18 @@ To use either (or both) you need to ensure your `config/services.php` file is se
     'client_secret' => env('DROPBOX_SECRET'),
 ],
 'google' => [
-    'client_id' => env ( 'GOOGLE_ID' ),
-    'client_secret' => env ( 'GOOGLE_SECRET' )
+    'client_id' => env ('GOOGLE_ID'),
+    'client_secret' => env ('GOOGLE_SECRET')
 ],
 ```
 
 Then of course setup the appropriate variables in your .env file. 
 
 ## Quick example
+
+There are two primary ways to manage storage connections.
+
+### 1. Using connections through eloquent
 
 Let's say you want to connect to the Dropbox account of your currently logged-in user. In a controller method you would simply call:
 
@@ -62,7 +76,7 @@ Auth::user()->dropbox_connection->upload("/path/to/source/file.pdf", "uploaded.p
 
 This creates a _queued_ job to upload the file, retry on error, and will dispatch an event when it succeeds or if it ultimately fails.
 
-## Using without Eloquent
+### 2. Using without Eloquent
 
 If you aren't looking to link the cloud storage connection to a database model (perhaps you are only looking to configure one connection for your whole app) you can also provide your own load/save methods. 
 
@@ -78,15 +92,13 @@ StorageConnect::loadConnectedStorageUsing(function($driver) {
 });
 ```
 
-To authorize a new cloud connection you can do this from a controller method:
+To authorize a new cloud connection you can redirect to the pre-wired route of `/storage-connect/authorize/dropbox`, or you can create our own route and call:
 
 ```php
 return StorageConnect::driver('dropbox')->authorize($redirectUrl);
 ```
 
-Alternatively you can just use the pre-wired route of `/storage-connect/authorize/dropbox`.
-
-Once authorized you you can upload files like this:
+Once authorized you you can load a connection and upload files:
 
 ```php
 StorageConnect::load('dropbox')->upload("/path/to/source/file.pdf", "uploaded.pdf");
