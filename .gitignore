@@ -3,4 +3,4 @@ composer.lock
 vendor
 coverage
 .idea
-docs/.vuepress/dist
+dist
