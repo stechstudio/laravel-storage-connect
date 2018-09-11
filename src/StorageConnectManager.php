@@ -105,7 +105,7 @@ class StorageConnectManager extends Manager
     /**
      * @param $callback
      */
-    public function saveConnectedStorageUsing($callback)
+    public function saveUsing($callback)
     {
         $this->saveCallback = $callback;
     }
@@ -116,7 +116,7 @@ class StorageConnectManager extends Manager
      *
      * @return mixed
      */
-    public function saveConnectedStorage(AbstractConnection $connection, $driver)
+    public function save(AbstractConnection $connection, $driver)
     {
         call_user_func_array($this->saveCallback, [$connection, $driver]);
     }
@@ -138,7 +138,7 @@ class StorageConnectManager extends Manager
     /**
      * @param $callback
      */
-    public function loadConnectedStorageUsing($callback)
+    public function loadUsing($callback)
     {
         $this->loadCallback = $callback;
     }

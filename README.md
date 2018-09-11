@@ -83,12 +83,12 @@ If you aren't looking to link the cloud storage connection to a database model (
 Stick these in your AppServiceProvider `boot` method:
 
 ```php
-StorageConnect::saveConnectedStorageUsing(function($connection, $driver) {
+StorageConnect::saveUsing(function($connection, $driver) {
     // Store the connection wherever you want, for example in the app `storage` directory 
     Storage::put($driver . '_connection.json', $connection);
 });
 
-StorageConnect::loadConnectedStorageUsing(function($driver) {
+StorageConnect::loadUsing(function($driver) {
     return Storage::get($driver . '_connection.json');
 });
 ```

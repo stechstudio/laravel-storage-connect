@@ -217,7 +217,7 @@ abstract class AbstractConnection
         if ($this->owner) {
             $this->owner->setStorageConnection($this->name, $this)->save();
         } else {
-            app('sts.storage-connect')->saveConnectedStorage($this, $this->name());
+            app('sts.storage-connect')->save($this, $this->name());
         }
 
         return $this;
