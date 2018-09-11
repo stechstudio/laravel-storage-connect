@@ -63,7 +63,7 @@ There are two primary ways to manage storage connections.
 Let's say you want to connect to the Dropbox account of your currently logged-in user. In a controller method you would simply call:
 
 ```php
-return Auth::user()->dropbox_connection->connect($redirectUrl);
+return Auth::user()->dropbox_connection->authorize($redirectUrl);
 ```
 
 This will redirect the user through the Dropbox oauth process, handle the callback, store the access tokens in the database for your user, and finally redirect back to your desired page.

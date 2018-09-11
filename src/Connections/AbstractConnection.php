@@ -70,7 +70,7 @@ abstract class AbstractConnection
      *
      * @return mixed
      */
-    public function connect($redirectUrl = null)
+    public function authorize($redirectUrl = null)
     {
         return $this->provider()->authorize($redirectUrl, $this);
     }
