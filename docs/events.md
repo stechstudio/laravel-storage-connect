@@ -1,6 +1,6 @@
 # Events
 
-This package fires events for all pretty much all activity through the connection and upload process. 
+This package fires events for most all activity throughout the connection and upload process. 
 
 ## Connections
 
@@ -14,17 +14,17 @@ Fired when a connection is disabled for any reason, such as storage being full o
 
 ### `ConnectionEnabled`
 
-Fired when... oh you know what I think you have the hang of this by now.
+Fired when...oh, you know what, I think you have the hang of this by now.
 
 ## Uploads
 
 ### `UploadSucceeded`
 
-Fired when we believe to have successfully uploaded a file to a cloud storage account. Note that in some cases, for instance when uploading a URL with Dropbox, this is not a guarantee since the upload is done async on Dropbox's end.
+Fired when we believe to have successfully uploaded a file to a cloud storage account. Note that in some cases, for instance when uploading a URL with Dropbox, this is not a guarantee since the upload is done asynchronously on Dropbox's end.
 
 ### `UploadRetrying`
 
-There are a lot of reasons why an upload might fail and be worth retrying. Rate limiting, `5XX` errors, etc. By default the queued upload job will retry a max of five times.
+There are a lot of reasons why an upload might fail and be worth retrying (rate limiting, `5XX` errors, etc). By default, the queued upload job will retry a max of five times.
 
 ### `UploadFailed`
 
