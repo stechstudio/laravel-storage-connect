@@ -8,7 +8,7 @@
  4. Search for and enable the Google+ and Google Drive APIs
  5. Now select Credentials on the left menu and select the "OAuth consent screen" tab at the top
  6. Enter a product name on this page and save, the rest is optional
- 7. Now go back to the Credential tab and select Create credentials -> OAuth client ID
+ 7. Now go back to the Credentials tab and select Create credentials -> OAuth client ID
  8. Select Web application as the type, give it a name, and provide the redirect URI for your app
 
 ## Redirect URI
