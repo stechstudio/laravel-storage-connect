@@ -8,7 +8,7 @@ use Exception;
  * Class GoogleConnection
  * @package STS\StorageConnect\Connections
  */
-class GoogleConnection extends AbstractConnection
+class GoogleConnection extends Connection
 {
     /**
      * @var string

@@ -6,11 +6,11 @@ use Illuminate\Support\Str;
 use Illuminate\Http\RedirectResponse;
 use InvalidArgumentException;
 use SocialiteProviders\Manager\OAuth2\User;
-use STS\StorageConnect\Connections\AbstractConnection;
+use STS\StorageConnect\Connections\Connection;
 use STS\StorageConnect\Connections\DropboxConnection;
 use STS\StorageConnect\Connections\GoogleConnection;
 use STS\StorageConnect\Drivers\DropboxDriver;
-use STS\StorageConnect\Events\StorageConnected;
+use STS\StorageConnect\Events\ConnectionEstablished;
 use STS\StorageConnect\Providers\DropboxProvider;
 use STS\StorageConnect\Providers\GoogleProvider;
 
@@ -111,12 +111,12 @@ class StorageConnectManager extends Manager
     }
 
     /**
-     * @param AbstractConnection $connection
+     * @param Connection $connection
      * @param $driver
      *
      * @return mixed
      */
-    public function save(AbstractConnection $connection, $driver)
+    public function save(Connection $connection, $driver)
     {
         call_user_func_array($this->saveCallback, [$connection, $driver]);
     }

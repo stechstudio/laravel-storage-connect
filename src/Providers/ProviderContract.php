@@ -2,7 +2,7 @@
 namespace STS\StorageConnect\Providers;
 
 use Illuminate\Http\RedirectResponse;
-use STS\StorageConnect\Connections\AbstractConnection;
+use STS\StorageConnect\Connections\Connection;
 
 /**
  * Interface ProviderContract
@@ -21,7 +21,7 @@ interface ProviderContract
     public function name();
 
     /**
-     * @return AbstractConnection
+     * @return Connection
      */
     public function connection();
 }

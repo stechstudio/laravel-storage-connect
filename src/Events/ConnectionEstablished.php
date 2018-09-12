@@ -1,12 +1,12 @@
 <?php
 namespace STS\StorageConnect\Events;
 
-use STS\StorageConnect\Connections\AbstractConnection;
+use STS\StorageConnect\Connections\Connection;
 
-class StorageConnected
+class ConnectionEstablished
 {
     /**
-     * @var AbstractConnection
+     * @var Connection
      */
     public $connection;
 
@@ -18,10 +18,10 @@ class StorageConnected
     /**
      * StorageConnected constructor.
      *
-     * @param AbstractConnection $connection
+     * @param Connection $connection
      * @param $driver
      */
-    public function __construct(AbstractConnection $connection, $driver)
+    public function __construct(Connection $connection, $driver)
     {
         $this->connection = $connection;
         $this->driver = $driver;

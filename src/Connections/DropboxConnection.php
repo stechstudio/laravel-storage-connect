@@ -9,7 +9,7 @@ use Log;
  * Class DropboxConnection
  * @package STS\StorageConnect\Connections
  */
-class DropboxConnection extends AbstractConnection
+class DropboxConnection extends Connection
 {
     /**
      * @var string
@@ -19,6 +19,8 @@ class DropboxConnection extends AbstractConnection
     /**
      * @param Exception $e
      * @param                        $sourcePath
+     *
+     * @return DropboxConnection|void
      */
     protected function handleUploadError( Exception $e, $sourcePath)
     {
@@ -35,11 +37,11 @@ class DropboxConnection extends AbstractConnection
         }
 
         if(str_contains(array_get($error, 'error_summary'), "insufficient_space")) {
-            return $this->disable("Dropbox account is full", "full");
+            return $this->disable("Dropbox account is full", self::STORAGE_FULL);
         }
 
         if(str_contains(array_get($error, 'error_summary'), "invalid_access_token")) {
-            return $this->disable("Dropbox integration is invalid", "invalid");
+            return $this->disable("Dropbox integration is invalid", self::INVALID_ACCESS_TOKEN);
         }
 
         if(str_contains(array_get($error, 'error_summary'), 'too_many_write_operations')) {

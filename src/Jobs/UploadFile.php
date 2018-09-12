@@ -4,7 +4,7 @@ namespace STS\StorageConnect\Jobs;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use STS\StorageConnect\Connections\AbstractConnection;
+use STS\StorageConnect\Connections\Connection;
 
 /**
  * Class UploadFile
@@ -23,7 +23,7 @@ class UploadFile implements ShouldQueue
      */
     protected $remotePath;
     /**
-     * @var AbstractConnection
+     * @var Connection
      */
     protected $connection;
 
@@ -42,9 +42,9 @@ class UploadFile implements ShouldQueue
      *
      * @param $sourcePath
      * @param $remotePath
-     * @param AbstractConnection $connection
+     * @param Connection $connection
      */
-    public function __construct( $sourcePath, $remotePath, AbstractConnection $connection)
+    public function __construct($sourcePath, $remotePath, Connection $connection)
     {
         $this->sourcePath = $sourcePath;
         $this->remotePath = $remotePath;

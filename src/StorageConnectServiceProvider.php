@@ -5,8 +5,8 @@ namespace STS\StorageConnect;
 use Illuminate\Support\ServiceProvider;
 use STS\StorageConnect\Events\ConnectionDisabled;
 use STS\StorageConnect\Events\ConnectionEnabled;
-use STS\StorageConnect\Events\RetryingUpload;
-use STS\StorageConnect\Events\StorageConnected;
+use STS\StorageConnect\Events\UploadRetrying;
+use STS\StorageConnect\Events\ConnectionEstablished;
 use STS\StorageConnect\Events\UploadFailed;
 use STS\StorageConnect\Events\UploadSucceeded;
 
@@ -58,7 +58,7 @@ class StorageConnectServiceProvider extends ServiceProvider
      */
     protected function listenAndLog()
     {
-        $this->app['events']->listen(StorageConnected::class, function (StorageConnected $event) {
+        $this->app['events']->listen(ConnectionEstablished::class, function (ConnectionEstablished $event) {
             $this->app['log']->info("New cloud storage connection", [
                 'connection' => $event->connection->identify()
             ]);
@@ -72,7 +72,7 @@ class StorageConnectServiceProvider extends ServiceProvider
             ]);
         });
 
-        $this->app['events']->listen(RetryingUpload::class, function (RetryingUpload $event) {
+        $this->app['events']->listen(UploadRetrying::class, function (UploadRetrying $event) {
             $this->app['log']->warning($event->message, [
                 'source'     => $event->sourcePath,
                 'connection' => $event->connection->identify()

@@ -1,6 +1,6 @@
 # Introduction
 
-This package drastically simplifies the process of authenticating to a user's cloud storage account and uploading files.
+This is a Laravel package designed to drastically simplify the process of authenticating to a user's cloud storage account and uploading files.
 
 - Handles OAuth flow to authorize a cloud storage account
 - Serializes and handles storing/loading of access tokens and connection details

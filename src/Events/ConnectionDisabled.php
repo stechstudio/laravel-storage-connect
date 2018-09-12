@@ -2,7 +2,7 @@
 
 namespace STS\StorageConnect\Events;
 
-use STS\StorageConnect\Connections\AbstractConnection;
+use STS\StorageConnect\Connections\Connection;
 
 /**
  * Class ConnectionDisabled
@@ -11,7 +11,7 @@ use STS\StorageConnect\Connections\AbstractConnection;
 class ConnectionDisabled
 {
     /**
-     * @var AbstractConnection
+     * @var Connection
      */
     public $connection;
 
@@ -28,11 +28,11 @@ class ConnectionDisabled
     /**
      * ConnectionDisabled constructor.
      *
-     * @param AbstractConnection $connection
+     * @param Connection $connection
      * @param                    $reason
      * @param                    $message
      */
-    public function __construct( AbstractConnection $connection, $reason, $message )
+    public function __construct(Connection $connection, $reason, $message )
     {
         $this->connection = $connection;
         $this->reason = $reason;

@@ -2,6 +2,9 @@ module.exports = {
     title: 'Laravel Storage Connect',
     base: '/laravel-storage-connect/',
     themeConfig: {
+        nav: [
+            { text: 'GitHub', link: 'https://github.com/stechstudio/laravel-storage-connect' },
+        ],
         sidebar: [
             {
                 title: 'Setup',
@@ -27,7 +30,8 @@ module.exports = {
                 collapsable: false,
                 children: [
                     '/uploading-files',
-                    '/connection-api'
+                    '/connection-api',
+                    '/events'
                 ]
             }
         ]

@@ -1,6 +1,6 @@
 # Laravel Storage Connect
 
-This package drastically simplifies the process of authenticating to a user's cloud storage account uploading files.
+This package is designed to drastically simplify the process of authenticating to a user's cloud storage account uploading files.
  
  - Handles OAuth flow to authorize a cloud storage account
  - Serializes and handles storing/loading of connection details

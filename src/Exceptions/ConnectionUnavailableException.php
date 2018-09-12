@@ -2,7 +2,7 @@
 
 namespace STS\StorageConnect\Exceptions;
 
-use STS\StorageConnect\Connections\AbstractConnection;
+use STS\StorageConnect\Connections\Connection;
 use Throwable;
 
 /**
@@ -14,19 +14,19 @@ class ConnectionUnavailableException extends \Exception
     /**
      * ConnectionUnavailableException constructor.
      *
-     * @param AbstractConnection $connection
+     * @param Connection $connection
      */
-    public function __construct(AbstractConnection $connection)
+    public function __construct(Connection $connection)
     {
         $this->message = $this->why($connection);
     }
 
     /**
-     * @param AbstractConnection $connection
+     * @param Connection $connection
      *
      * @return string
      */
-    protected function why(AbstractConnection $connection)
+    protected function why(Connection $connection)
     {
         if(!$connection->isConnected()) {
             return "Connection is not set up";
@@ -38,11 +38,11 @@ class ConnectionUnavailableException extends \Exception
     }
 
     /**
-     * @param AbstractConnection $connection
+     * @param Connection $connection
      *
      * @return mixed
      */
-    protected function reason(AbstractConnection $connection)
+    protected function reason(Connection $connection)
     {
         return array_get([
             'invalid' => 'Connection is invalid, please re-authorize',

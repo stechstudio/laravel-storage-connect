@@ -2,7 +2,7 @@
 
 namespace STS\StorageConnect\Events;
 
-use STS\StorageConnect\Connections\AbstractConnection;
+use STS\StorageConnect\Connections\Connection;
 
 /**
  * Class UploadSucceeded
@@ -11,7 +11,7 @@ use STS\StorageConnect\Connections\AbstractConnection;
 class UploadSucceeded
 {
     /**
-     * @var AbstractConnection
+     * @var Connection
      */
     public $connection;
 
@@ -28,11 +28,11 @@ class UploadSucceeded
     /**
      * UploadFailed constructor.
      *
-     * @param AbstractConnection $connection
+     * @param Connection $connection
      * @param                    $sourcePath
      * @param $destinationPath
      */
-    public function __construct(AbstractConnection $connection, $sourcePath, $destinationPath)
+    public function __construct(Connection $connection, $sourcePath, $destinationPath)
     {
         $this->connection = $connection;
         $this->sourcePath = $sourcePath;

@@ -9,7 +9,7 @@ use STS\Backoff\Backoff;
 use STS\Backoff\Strategies\PolynomialStrategy;
 use STS\StorageConnect\Events\ConnectionDisabled;
 use STS\StorageConnect\Events\ConnectionEnabled;
-use STS\StorageConnect\Events\RetryingUpload;
+use STS\StorageConnect\Events\UploadRetrying;
 use STS\StorageConnect\Events\UploadFailed;
 use STS\StorageConnect\Events\UploadSucceeded;
 use STS\StorageConnect\Exceptions\ConnectionUnavailableException;
@@ -23,7 +23,7 @@ use AWS;
  * Class AbstractConnection
  * @package STS\StorageConnect\Connections
  */
-abstract class AbstractConnection
+abstract class Connection
 {
     /**
      * @var Illuminate\Database\Eloquent\Model
@@ -56,11 +56,24 @@ abstract class AbstractConnection
     protected $job;
 
     /**
+     * These are used for the 'status' values
+     */
+    const STATUS_ENABLED = "enabled";
+    const STATUS_DISABLED = "disabled";
+
+    /**
+     * These are used for the 'reason' values when 'status' is disabled
+     */
+    const STORAGE_FULL = "full";
+    const INVALID_ACCESS_TOKEN = "invalid";
+
+
+    /**
      * AbstractConnection constructor.
      *
      * @param $provider
      */
-    public function __construct( $provider )
+    public function __construct($provider)
     {
         $this->provider = $provider;
         $this->provider->setConnection($this);
@@ -89,7 +102,7 @@ abstract class AbstractConnection
      */
     public function isConnected()
     {
-        return (bool) count($this->config);
+        return (bool)count($this->config);
     }
 
     /**
@@ -97,7 +110,7 @@ abstract class AbstractConnection
      */
     public function isEnabled()
     {
-        return $this->isConnected() && $this->status == "enabled";
+        return $this->isConnected() && $this->status == self::STATUS_ENABLED;
     }
 
     /**
@@ -105,12 +118,15 @@ abstract class AbstractConnection
      */
     public function isDisabled()
     {
-        return $this->isConnected() && $this->status == "disabled";
+        return $this->isConnected() && $this->status == self::STATUS_DISABLED;
     }
 
+    /**
+     * @return bool
+     */
     public function isFull()
     {
-        return $this->isDisabled() && $this->reason == "full";
+        return $this->isDisabled() && $this->reason == self::REASON_FULL;
     }
 
     /**
@@ -127,16 +143,19 @@ abstract class AbstractConnection
      */
     public function verify()
     {
-        if($this->isFull() && $this->quotaLastCheckedAt->diffInMinutes(Carbon::now()) > 60) {
+        if ($this->isFull() && $this->quotaLastCheckedAt->diffInMinutes(Carbon::now()) > 60) {
             $this->checkStorageQuota();
         }
 
         return $this->isEnabled();
     }
 
+    /**
+     *
+     */
     public function checkStorageQuota()
     {
-        if($this->percentFull() < 99) {
+        if ($this->percentFull() < 99) {
             $this->enable();
         } else {
             $this->quotaLastCheckedAt = Carbon::now();
@@ -149,7 +168,7 @@ abstract class AbstractConnection
      */
     public function verifyOrFail()
     {
-        if(!$this->verify()) {
+        if (!$this->verify()) {
             throw new ConnectionUnavailableException($this);
         }
     }
@@ -159,7 +178,7 @@ abstract class AbstractConnection
      *
      * @return $this
      */
-    public function belongsTo( $owner )
+    public function belongsTo($owner)
     {
         $this->owner = $owner;
 
@@ -191,9 +210,9 @@ abstract class AbstractConnection
      *
      * @return $this
      */
-    public function unserialize( $config )
+    public function unserialize($config)
     {
-        return $this->load((array) json_decode($config, true));
+        return $this->load((array)json_decode($config, true));
     }
 
     /**
@@ -201,12 +220,12 @@ abstract class AbstractConnection
      *
      * @return $this
      */
-    public function load( array $config )
+    public function load(array $config)
     {
         $this->config = $config;
 
-        foreach(['createdAt', 'lastUploadAt', 'disabledAt', 'quotaLastCheckedAt'] as $dtField) {
-            if(isset($this->config[$dtField]) && is_array($this->config[$dtField])) {
+        foreach (['createdAt', 'lastUploadAt', 'disabledAt', 'quotaLastCheckedAt'] as $dtField) {
+            if (isset($this->config[$dtField]) && is_array($this->config[$dtField])) {
                 $this->config[$dtField] = new Carbon($this->config[$dtField]['date'], $this->config[$dtField]['timezone']);
             }
         }
@@ -219,10 +238,10 @@ abstract class AbstractConnection
      *
      * @return $this
      */
-    public function initialize( array $config )
+    public function initialize(array $config)
     {
         return $this->load(array_merge($config, [
-            'status' => 'enabled',
+            'status'    => 'enabled',
             'createdAt' => Carbon::now()
         ]));
     }
@@ -246,7 +265,7 @@ abstract class AbstractConnection
      *
      * @return $this
      */
-    public function setJob( $job )
+    public function setJob($job)
     {
         $this->job = $job;
 
@@ -287,7 +306,7 @@ abstract class AbstractConnection
      * @return bool
      * @throws ConnectionUnavailableException
      */
-    public function upload( $sourcePath, $remotePath, $queued = true )
+    public function upload($sourcePath, $remotePath, $queued = true)
     {
         $this->verifyOrFail();
 
@@ -295,7 +314,7 @@ abstract class AbstractConnection
             return Queue::push(new UploadFile($sourcePath, $remotePath, $this));
         }
 
-        if(starts_with($sourcePath, "s3://")) {
+        if (starts_with($sourcePath, "s3://")) {
             app('aws')->createClient('s3')->registerStreamWrapper();
         }
 
@@ -322,10 +341,10 @@ abstract class AbstractConnection
      * @param $exception
      * @param $sourcePath
      */
-    protected function retry( $message, $exception, $sourcePath )
+    protected function retry($message, $exception, $sourcePath)
     {
         if ($this->job) {
-            event(new RetryingUpload($this, $message, $exception, $sourcePath));
+            event(new UploadRetrying($this, $message, $exception, $sourcePath));
 
             $this->job->release(
                 (new Backoff)
@@ -345,13 +364,13 @@ abstract class AbstractConnection
      *
      * @return $this
      */
-    public function disable( $message, $reason )
+    public function disable($message, $reason)
     {
         $this->status = "disabled";
         $this->reason = $reason;
         $this->disabledAt = new Carbon();
 
-        if($reason == "full") {
+        if ($reason == "full") {
             $this->quotaLastCheckedAt = Carbon::now();
         }
 
@@ -427,7 +446,7 @@ abstract class AbstractConnection
      *
      * @return mixed
      */
-    public function __get( $key )
+    public function __get($key)
     {
         return array_get($this->config, $key, array_get($this->config, camel_case($key)));
     }
@@ -436,7 +455,7 @@ abstract class AbstractConnection
      * @param $key
      * @param $value
      */
-    public function __set( $key, $value )
+    public function __set($key, $value)
     {
         array_set($this->config, $key, $value);
     }

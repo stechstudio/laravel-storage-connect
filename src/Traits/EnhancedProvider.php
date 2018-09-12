@@ -4,8 +4,8 @@ namespace STS\StorageConnect\Traits;
 
 use Illuminate\Http\RedirectResponse;
 use SocialiteProviders\Manager\OAuth2\User;
-use STS\StorageConnect\Connections\AbstractConnection;
-use STS\StorageConnect\Events\StorageConnected;
+use STS\StorageConnect\Connections\Connection;
+use STS\StorageConnect\Events\ConnectionEstablished;
 use STS\StorageConnect\StorageConnectManager;
 
 /**
@@ -30,7 +30,7 @@ trait EnhancedProvider
     protected $user;
 
     /**
-     * @var AbstractConnection
+     * @var Connection
      */
     protected $connection;
 
@@ -68,14 +68,14 @@ trait EnhancedProvider
     }
 
     /**
-     * @param AbstractConnection $connection
+     * @param Connection $connection
      * @param $redirectUrl
      *
      * @return mixed
      */
     public function authorize($redirectUrl = null, $connection = null)
     {
-        if($connection instanceof AbstractConnection && $connection->owner()) {
+        if($connection instanceof Connection && $connection->owner()) {
             $this->request->session()->put('storage-connect.owner', $connection->owner());
         }
 
@@ -111,7 +111,7 @@ trait EnhancedProvider
         }
 
         $this->connection->save();
-        event(new StorageConnected($this->connection, $this->name()));
+        event(new ConnectionEstablished($this->connection, $this->name()));
 
         return $this->manager->redirectAfterConnect(array_get($settings, 'redirect'));
     }
@@ -137,11 +137,11 @@ trait EnhancedProvider
     }
 
     /**
-     * @param AbstractConnection $connection
+     * @param Connection $connection
      *
      * @return $this
      */
-    public function load( AbstractConnection $connection )
+    public function load(Connection $connection )
     {
         $this->connection = $connection;
 
@@ -149,7 +149,7 @@ trait EnhancedProvider
     }
 
     /**
-     * @return AbstractConnection
+     * @return Connection
      */
     public function connection()
     {
@@ -157,11 +157,11 @@ trait EnhancedProvider
     }
 
     /**
-     * @param AbstractConnection $connection
+     * @param Connection $connection
      *
      * @return $this
      */
-    public function setConnection(AbstractConnection $connection)
+    public function setConnection(Connection $connection)
     {
         $this->connection = $connection;
 
