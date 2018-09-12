@@ -6,7 +6,7 @@ In this case you can pass custom callbacks to handle all the loading and saving 
 
 ## Provide callbacks
 
-In your AppServiceProvider boot method tell StorageConnect how to load and save connections.
+In your AppServiceProvider boot method tell StorageConnect how to load and save connections:
 
 ```php
 StorageConnect::saveUsing(function($connection, $provider) {
@@ -21,7 +21,7 @@ StorageConnect::loadUsing(function($provider) {
 
 ## Setup a new connection
 
-This package provides a pre-wired route to setup a cloud storage connection. This route is available at `/storage-connect/authorize/dropbox` by default. (Change 'dropbox' to any supported provider name.) This will go through the OAuth flow, and end up calling your save callback when finished.
+This package provides a pre-wired route to setup a cloud storage connection. This route is available at `/storage-connect/authorize/dropbox` by default (change 'dropbox' to any supported provider name). This will go through the OAuth flow and end up calling your save callback when finished.
 
 Of course you can create your own route if need be. First access the driver and then call the authorize method:
 
@@ -39,17 +39,17 @@ Both authorization methods above provide a means of specifying the final redirec
 /storage-connect/authorize/dropbox?redirect=/dashboard
 ```
 
-If you are calling the authorize method simply pass your redirect URL as an argument.
+If you are calling the authorize method simply pass your redirect URL as an argument:
 
 ```php
 return StorageConnect::connection('dropbox')->authorize('/dashboard');
 ```
 
-If you don't provide a redirect URL at all the config redirect_after_connect value will be used.
+If you don't provide a redirect URL at all the config `redirect_after_connect` value will be used.
 
 ## Load existing connection
 
-You can load a storage connection by using the load method on the StorageConnect facade.
+You can load a storage connection by using the load method on the StorageConnect facade:
 
 ```php
 StorageConnect::load('dropbox')->upload(...);
