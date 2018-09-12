@@ -54,9 +54,9 @@ class GoogleProvider extends Provider implements ProviderContract
     protected function mapUserToConnectionConfig( User $user )
     {
         return [
-            'name'   => $user->name,
-            'email'  => $user->email,
-            'token'  => $user->accessTokenResponseBody
+            'name'  => $user->name,
+            'email' => $user->email,
+            'token' => $user->accessTokenResponseBody
         ];
     }
 
@@ -68,8 +68,8 @@ class GoogleProvider extends Provider implements ProviderContract
      */
     public function upload( $sourcePath, $destinationPath )
     {
-        $file = $this->prepareFile($sourcePath, $destinationPath);
-        $filesize = filesize($sourcePath);
+        $file = $this->prepareFile($destinationPath);
+        list($filesize, $mimeType) = $this->stats($sourcePath);
 
         if ($filesize >= 5 * 1024 * 1024) {
             return $this->uploadChunked($sourcePath, $file, $filesize);
@@ -77,26 +77,39 @@ class GoogleProvider extends Provider implements ProviderContract
 
         return $this->service()->files->create($file, [
             'data'       => file_get_contents($sourcePath),
-            'mimeType'   => $file->getMimeType(),
+            'mimeType'   => $mimeType,
             'uploadType' => 'media',
         ])->id;
     }
 
     /**
-     * @param $sourcePath
      * @param $destinationPath
      *
      * @return Google_Service_Drive_DriveFile
      */
-    protected function prepareFile( $sourcePath, $destinationPath )
+    protected function prepareFile( $destinationPath )
     {
         $folderId = $this->getFolderIdForPath($this->manager->appName() . "/" . dirname($destinationPath));
 
         return new Google_Service_Drive_DriveFile([
-            'name'     => basename($destinationPath),
-            'parents'  => [$folderId],
-            'mimeType' => mime_content_type($sourcePath)
+            'name'    => basename($destinationPath),
+            'parents' => [$folderId],
         ]);
+    }
+
+    /**
+     * @param $sourcePath
+     *
+     * @return array
+     */
+    protected function stat( $sourcePath )
+    {
+        if (starts_with($sourcePath, "http")) {
+            $headers = array_change_key_case(get_headers($sourcePath, 1));
+            return [$headers['content-length'], $headers['content-type']];
+        }
+
+        return [filesize($sourcePath), mime_content_type($sourcePath)];
     }
 
     /**

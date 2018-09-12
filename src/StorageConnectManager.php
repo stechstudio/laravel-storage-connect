@@ -150,8 +150,9 @@ class StorageConnectManager extends Manager
      */
     public function load($driver = null)
     {
-        return $this->connection($driver)
-            ->load(call_user_func($this->loadCallback, $driver));
+        return $this->loadCallback
+            ? $this->connection($driver)->load(call_user_func($this->loadCallback, $driver))
+            : $this->connection($driver);
     }
 
     /**
