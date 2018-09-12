@@ -2,7 +2,7 @@
 
 Most of the package configuration can be done using your .env file, which is recommended.
 
-If you want to edit the config file directly first publish it to your own config directory using php artisan vendor:publish.
+If you want to edit the config file directly, first publish it to your own config directory using `php artisan vendor:publish`.
 
 ## Default provider
 
@@ -24,7 +24,7 @@ This will use the default provider, load the connection from your custom load ca
 STORAGE_CONNECT_APP_NAME=My fancy app name
 ```
 
-This is used for the root folder name in Google Drive. If you don't provide this we'll use the Laravel APP_NAME.
+This is used for the root folder name in Google Drive. If you don't provide this we'll use the Laravel `APP_NAME`.
 
 ## Log activity
 
@@ -32,9 +32,9 @@ This is used for the root folder name in Google Drive. If you don't provide this
 STORAGE_CONNECT_LOG_ACTIVITY=false
 ```
 
-By default this package does not do any logging. Instead it fires events and let's you choose how to handle it.
+By default, this package does not do any logging. Instead it fires events and lets you choose how to handle them.
 
-If you'd like activity logging set this to true.
+If you'd like activity logging, set this to true.
 
 ## Route middleware
 
@@ -42,9 +42,9 @@ If you'd like activity logging set this to true.
 STORAGE_CONNECT_MIDDLEWARE=web
 ```
 
-This package provides a handful of pre-wired routes for kicking off OAuth, and handling the callback. By default the web middleware group is specified for these routes.
+This package provides a handful of pre-wired routes for kicking off OAuth and handling the callback. By default, the web middleware group is specified for these routes.
 
-You can change this by specifying a middeware name (or group name) here. If you change this make sure your middleware group includes StartSession so that CSRF is handled during the OAuth flow.
+You can change this by specifying a middleware name (or group name) here. If you change this make sure your middleware group includes StartSession so that CSRF is handled during the OAuth flow.
 
 ## Redirecting after OAuth
 
@@ -52,6 +52,6 @@ You can change this by specifying a middeware name (or group name) here. If you 
 STORAGE_CONNECT_REDIRECT_AFTER_CONNECT=/dashboard
 ```
 
-You can specify a redirect URL when using the pre-wired authorize route or when calling the authorize method yourself on a connection.
+You can specify a redirect URL when using the pre-wired authorize route or when calling the authorize method, yourself, on a connection.
 
-If a redirect URL is not explicitly passed in this config will be used as a fallback.
+If a redirect URL is not explicitly passed in, this config will be used as a fallback.
