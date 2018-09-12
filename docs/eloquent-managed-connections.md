@@ -67,7 +67,7 @@ Both authorization methods above provide a means of specifying the final redirec
 /storage-connect/authorize-user/dropbox?redirect=/dashboard
 ```
 
-If you are calling the authorize method simply pass your redirect URL as an argument.
+If you are calling the authorize method simply pass your redirect URL as an argument:
 
 ```php
 return Auth::user()->organization->dropbox_connection->authorize('/dashboard');
@@ -77,7 +77,7 @@ If you don't provide a redirect URL at all the config `redirect_after_connect` v
 
 ## Load existing connection
 
-You can now interact with your cloud storage connections from the Eloquent model.
+You can now interact with your cloud storage connections from the Eloquent model:
 
 ```php
 User::find(1)->dropbox_connection->upload(...);
