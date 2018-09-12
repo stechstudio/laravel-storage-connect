@@ -1,5 +1,6 @@
 module.exports = {
     title: 'Laravel Storage Connect',
+    base: '/laravel-storage-connect/',
     themeConfig: {
         sidebar: [
             {
