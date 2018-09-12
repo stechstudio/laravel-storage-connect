@@ -55,7 +55,7 @@ To authorize a new cloud connection you can redirect to the pre-wired route of /
 return StorageConnect::driver('dropbox')->authorize($redirectUrl);
 ```
 
-Once authorized you you can load a connection and upload files:
+Once authorized you can load a connection and upload files:
 
 ```php
 StorageConnect::load('dropbox')->upload("/path/to/source/file.pdf", "uploaded.pdf");
