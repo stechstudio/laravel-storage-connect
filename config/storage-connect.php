@@ -19,6 +19,11 @@ return [
     'default' => env('STORAGE_CONNECT_DEFAULT','dropbox'),
 
     /**
+     * Pre-wire authorization routes. Disable this if you want to create your own routes to kick off OAuth.
+     */
+    'authorize_routes' => env('STORAGE_CONNECT_AUTHORIZE_ROUTES', true),
+
+    /**
      * The base URI path we'll register for your authorize/callback endpoints
      */
     'path' => env('STORAGE_CONNECT_PATH', 'storage-connect'),
