@@ -2,6 +2,7 @@
 
 namespace STS\StorageConnect\Connections;
 
+use ArrayObject;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\RedirectResponse;
@@ -413,11 +414,11 @@ abstract class Connection
     }
 
     /**
-     * @return array
+     * @return ArrayObject
      */
     public function user()
     {
-        return array_only($this->config, ['name', 'email']);
+        return new ArrayObject(array_only($this->config, ['name', 'email']), ArrayObject::ARRAY_AS_PROPS);
     }
 
     /**

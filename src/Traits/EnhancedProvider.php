@@ -6,6 +6,7 @@ use Illuminate\Http\RedirectResponse;
 use SocialiteProviders\Manager\OAuth2\User;
 use STS\StorageConnect\Connections\Connection;
 use STS\StorageConnect\Events\ConnectionEstablished;
+use STS\StorageConnect\Exceptions\UnauthorizedException;
 use STS\StorageConnect\StorageConnectManager;
 
 /**
@@ -72,9 +73,16 @@ trait EnhancedProvider
      * @param $redirectUrl
      *
      * @return mixed
+     * @throws UnauthorizedException
      */
     public function authorize($redirectUrl = null, $connection = null)
     {
+        $response = $this->manager->runBeforeAuthorize($this->name());
+
+        if($response !== true) {
+            return $response;
+        }
+
         if($connection instanceof Connection && $connection->owner()) {
             $this->request->session()->put('storage-connect.owner', $connection->owner());
         }

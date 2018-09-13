@@ -1,4 +1,5 @@
 <?php
+
 namespace STS\StorageConnect;
 
 use Illuminate\Support\Manager;
@@ -11,6 +12,7 @@ use STS\StorageConnect\Connections\DropboxConnection;
 use STS\StorageConnect\Connections\GoogleConnection;
 use STS\StorageConnect\Drivers\DropboxDriver;
 use STS\StorageConnect\Events\ConnectionEstablished;
+use STS\StorageConnect\Exceptions\UnauthorizedException;
 use STS\StorageConnect\Providers\DropboxProvider;
 use STS\StorageConnect\Providers\GoogleProvider;
 
@@ -34,6 +36,11 @@ class StorageConnectManager extends Manager
      * @var callable
      */
     protected $loadCallback;
+
+    /**
+     * @var callable
+     */
+    protected $beforeAuthorizeCallback;
 
     /**
      * @var array
@@ -87,7 +94,7 @@ class StorageConnectManager extends Manager
      */
     protected function createDriver($driver)
     {
-        if(!$this->isSupportedDriver($driver)) {
+        if (!$this->isSupportedDriver($driver)) {
             throw new InvalidArgumentException("Driver [$driver] not supported.");
         }
 
@@ -119,6 +126,36 @@ class StorageConnectManager extends Manager
     public function save(Connection $connection, $driver)
     {
         call_user_func_array($this->saveCallback, [$connection, $driver]);
+    }
+
+    public function beforeAuthorize($callback)
+    {
+        $this->beforeAuthorizeCallback = $callback;
+    }
+
+    /**
+     * @param $driver
+     *
+     * @return bool|mixed
+     * @throws UnauthorizedException
+     */
+    public function runBeforeAuthorize($driver)
+    {
+        if(!$this->beforeAuthorizeCallback) {
+            return true;
+        }
+
+        $response = call_user_func($this->beforeAuthorizeCallback, $driver);
+
+        if($response instanceof RedirectResponse) {
+            return $response;
+        }
+
+        if($response === false) {
+            throw new UnauthorizedException();
+        }
+
+        return true;
     }
 
     /**
@@ -155,10 +192,10 @@ class StorageConnectManager extends Manager
     {
         $driver = $driver ?: $this->getDefaultDriver();
 
-        if (! isset($this->connections[$driver])) {
+        if (!isset($this->connections[$driver])) {
             $this->connections[$driver] = $this->createConnection($driver);
 
-            if($load && $this->loadCallback) {
+            if ($load && $this->loadCallback) {
                 $this->connections[$driver]->load(call_user_func($this->loadCallback, $driver));
             }
         }
@@ -169,7 +206,8 @@ class StorageConnectManager extends Manager
     /**
      * Create a new connection instance.
      *
-     * @param  string  $driver
+     * @param  string $driver
+     *
      * @return mixed
      *
      * @throws \InvalidArgumentException
@@ -177,7 +215,7 @@ class StorageConnectManager extends Manager
     protected function createConnection($driver)
     {
 
-        $method = 'create'.Str::studly($driver).'Connection';
+        $method = 'create' . Str::studly($driver) . 'Connection';
 
         if (method_exists($this, $method)) {
             return $this->$method();
@@ -207,11 +245,11 @@ class StorageConnectManager extends Manager
      */
     public function appName()
     {
-        if($appName = self::appName) {
+        if ($appName = self::appName) {
             return $appName;
         }
 
-        if($appName = $this->app['config']->get('storage-connect.app_name')) {
+        if ($appName = $this->app['config']->get('storage-connect.app_name')) {
             return $appName;
         }
 
@@ -221,8 +259,9 @@ class StorageConnectManager extends Manager
     /**
      * Dynamically call the default connection instance.
      *
-     * @param  string  $method
-     * @param  array   $parameters
+     * @param  string $method
+     * @param  array $parameters
+     *
      * @return mixed
      */
     public function __call($method, $parameters)
