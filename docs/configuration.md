@@ -36,6 +36,16 @@ By default, this package does not do any logging. Instead it fires events and le
 
 If you'd like activity logging, set this to true.
 
+## Authorize routes
+
+```
+STORAGE_CONNECT_AUTHORIZE_ROUTES=true
+```
+
+By default this package create two pre-wired routes for kicking off the OAuth flow. One for [Eloquent-managed connections](./eloquent-managed-connections) and one for [self-managed connections](./self-managed-connections).
+
+Disable this flag if you want to setup your own routes and avoid these completely. Note the callback route will still be wired up, that one is required.
+
 ## Route middleware
 
 ```
@@ -44,7 +54,7 @@ STORAGE_CONNECT_MIDDLEWARE=web
 
 This package provides a handful of pre-wired routes for kicking off OAuth and handling the callback. By default, the web middleware group is specified for these routes.
 
-You can change this by specifying a middleware name (or group name) here. If you change this make sure your middleware group includes StartSession so that CSRF is handled during the OAuth flow.
+You can change this by specifying a middleware name (or group name) here. If you change this make sure your middleware group includes `session` so that CSRF is handled during the OAuth flow.
 
 ## Redirecting after OAuth
 
