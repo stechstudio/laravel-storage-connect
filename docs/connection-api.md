@@ -18,6 +18,10 @@ Determines if the connection has been setup, yet disabled for some reason.
 
 Determines if the connection is disabled due to storage quota.
 
+### `user(): array`
+
+Returns an array with the `name` and `email` of the user's cloud storage account.
+
 ## Storage quota
 
 ### `percentFull(): float`

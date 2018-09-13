@@ -413,6 +413,14 @@ abstract class Connection
     }
 
     /**
+     * @return array
+     */
+    public function user()
+    {
+        return array_only($this->config, ['name', 'email']);
+    }
+
+    /**
      * The provider has an instance of the Laravel application, as well as
      * the StorageConnectManager, both of which contain Closures. So before
      * we are serialized, detach all this.
