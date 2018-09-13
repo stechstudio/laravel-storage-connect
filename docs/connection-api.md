@@ -1,6 +1,6 @@
 # Connection API
 
-## Status methods
+## Status
 
 ### `isConnected(): bool`
 

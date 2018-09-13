@@ -126,7 +126,7 @@ abstract class Connection
      */
     public function isFull()
     {
-        return $this->isDisabled() && $this->reason == self::REASON_FULL;
+        return $this->isDisabled() && $this->reason == self::STORAGE_FULL;
     }
 
     /**

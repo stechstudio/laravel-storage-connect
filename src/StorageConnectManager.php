@@ -38,7 +38,7 @@ class StorageConnectManager extends Manager
     /**
      * @var array
      */
-    protected $connections = [];
+    public $connections = [];
 
     /**
      * @var string
@@ -144,29 +144,23 @@ class StorageConnectManager extends Manager
     }
 
     /**
-     * @param $driver
-     *
-     * @return mixed
-     */
-    public function load($driver = null)
-    {
-        return $this->loadCallback
-            ? $this->connection($driver)->load(call_user_func($this->loadCallback, $driver))
-            : $this->connection($driver);
-    }
-
-    /**
      * Get a connection instance.
      *
-     * @param  string  $driver
+     * @param  string $driver
+     * @param bool $load
+     *
      * @return mixed
      */
-    public function connection($driver = null)
+    public function connection($driver = null, $load = true)
     {
         $driver = $driver ?: $this->getDefaultDriver();
 
         if (! isset($this->connections[$driver])) {
             $this->connections[$driver] = $this->createConnection($driver);
+
+            if($load && $this->loadCallback) {
+                $this->connections[$driver]->load(call_user_func($this->loadCallback, $driver));
+            }
         }
 
         return $this->connections[$driver];
@@ -233,6 +227,6 @@ class StorageConnectManager extends Manager
      */
     public function __call($method, $parameters)
     {
-        return $this->load()->$method(...$parameters);
+        return $this->connection()->$method(...$parameters);
     }
 }

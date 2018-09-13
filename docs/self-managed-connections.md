@@ -52,5 +52,5 @@ If you don't provide a redirect URL at all the config `redirect_after_connect` v
 You can load a storage connection by using the load method on the StorageConnect facade:
 
 ```php
-StorageConnect::load('dropbox')->upload(...);
+StorageConnect::connection('dropbox')->upload(...);
 ```
