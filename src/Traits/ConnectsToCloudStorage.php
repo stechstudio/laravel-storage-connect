@@ -2,7 +2,8 @@
 
 namespace STS\StorageConnect\Traits;
 
-use StorageConnect;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
+use STS\StorageConnect\Models\CloudStorage;
 
 /**
  * Class ConnectsToCloudStorage
@@ -10,48 +11,47 @@ use StorageConnect;
  */
 trait ConnectsToCloudStorage
 {
+    protected $supportedCloudStorage = ["dropbox", "google"];
+
     /**
-     * @return null
+     * @return MorphOne
      */
-    public function getDropboxConnectionAttribute()
+    public function dropbox()
     {
-        return $this->getStorageConnection('dropbox');
+        return $this->morphOne(CloudStorage::class, 'owner')->whereDriver('dropbox')->withDefault([
+            'driver' => 'dropbox',
+        ]);
     }
 
     /**
-     * @param $connection
+     * @return MorphOne
      */
-    public function setDropboxConnectionAttribute($connection)
+    public function google()
     {
-        $this->setStorageConnection('dropbox', $connection);
+        return $this->morphOne(CloudStorage::class, 'owner')->whereDriver('google')->withDefault([
+            'drive' => 'google',
+        ]);
     }
 
     /**
-     * @param $provider
+     * Alias
      *
-     * @return null
+     * @return MorphOne
      */
-    public function getStorageConnection($provider)
+    public function googleDrive()
     {
-        return StorageConnect::connection($provider)->belongsTo($this)->unserialize(
-            $this->attributes[array_get($this->cloudStorageConnections, $provider)]
-        );
+        return $this->google();
     }
 
     /**
-     * @param $provider
-     * @param $connection
+     * @param $driver
      *
-     * @return null
+     * @return CloudStorage
      */
-    public function setStorageConnection($provider, $connection)
+    public function getCloudStorage($driver)
     {
-        if (!array_key_exists($provider, $this->cloudStorageConnections)) {
-            return null;
+        if (in_array($driver, $this->supportedCloudStorage)) {
+            return $this->{$driver};
         }
-
-        $this->attributes[array_get($this->cloudStorageConnections, $provider)] = (string)$connection;
-
-        return $this;
     }
 }

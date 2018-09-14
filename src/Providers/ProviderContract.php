@@ -10,18 +10,5 @@ use STS\StorageConnect\Connections\Connection;
  */
 interface ProviderContract
 {
-    /**
-     * @return RedirectResponse
-     */
-    public function finish();
 
-    /**
-     * @return string
-     */
-    public function name();
-
-    /**
-     * @return Connection
-     */
-    public function connection();
 }

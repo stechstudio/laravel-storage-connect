@@ -2,7 +2,8 @@
 
 namespace STS\StorageConnect\Events;
 
-use STS\StorageConnect\Connections\Connection;
+use STS\StorageConnect\Exceptions\UploadException;
+use STS\StorageConnect\Models\CloudStorage;
 
 /**
  * Class RetryingUpload
@@ -11,38 +12,24 @@ use STS\StorageConnect\Connections\Connection;
 class UploadRetrying
 {
     /**
-     * @var Connection
+     * @var CloudStorage
      */
-    public $connection;
+    public $storage;
 
     /**
-     * @var string
-     */
-    public $message;
-
-    /**
-     * @var string
-     */
-    public $sourcePath;
-
-    /**
-     * @var \Exception
+     * @var UploadException
      */
     public $exception;
 
     /**
      * RetryingUpload constructor.
      *
-     * @param Connection $connection
-     * @param                    $message
-     * @param $exception
-     * @param                    $sourcePath
+     * @param CloudStorage $storage
+     * @param UploadException $exception
      */
-    public function __construct(Connection $connection, $message, $exception, $sourcePath )
+    public function __construct(CloudStorage $storage, UploadException $exception )
     {
-        $this->connection = $connection;
-        $this->message = $message;
-        $this->sourcePath = $sourcePath;
+        $this->storage = $storage;
         $this->exception = $exception;
     }
 }

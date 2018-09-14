@@ -4,7 +4,9 @@ namespace STS\StorageConnect\Jobs;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use STS\StorageConnect\Connections\Connection;
+use STS\Backoff\Backoff;
+use STS\Backoff\Strategies\PolynomialStrategy;
+use STS\StorageConnect\Models\CloudStorage;
 
 /**
  * Class UploadFile
@@ -21,11 +23,11 @@ class UploadFile implements ShouldQueue
     /**
      * @var string
      */
-    protected $remotePath;
+    protected $destinationPath;
     /**
-     * @var Connection
+     * @var CloudStorage
      */
-    protected $connection;
+    protected $storage;
 
     /**
      * @var int
@@ -41,22 +43,41 @@ class UploadFile implements ShouldQueue
      * UploadFile constructor.
      *
      * @param $sourcePath
-     * @param $remotePath
-     * @param Connection $connection
+     * @param $destinationPath
+     * @param CloudStorage $storage
      */
-    public function __construct($sourcePath, $remotePath, Connection $connection)
+    public function __construct($sourcePath, $destinationPath, CloudStorage $storage)
     {
         $this->sourcePath = $sourcePath;
-        $this->remotePath = $remotePath;
-        $this->connection = $connection;
+        $this->destinationPath = $destinationPath;
+        $this->storage = $storage;
+    }
+
+    /**
+     *
+     * @throws \STS\StorageConnect\Exceptions\StorageUnavailableException
+     */
+    public function handle()
+    {
+        $this->storage->setJob($this);
+        $this->storage->upload($this->sourcePath, $this->destinationPath, false);
     }
 
     /**
      *
      */
-    public function handle()
+    public function release()
     {
-        $this->connection->setJob($this);
-        $this->connection->upload($this->sourcePath, $this->remotePath, false);
+        if(!$this->job) {
+            return;
+        }
+
+        $this->job->release(
+            (new Backoff)
+                ->setStrategy(new PolynomialStrategy(5, 3))
+                ->setWaitCap(900)
+                ->setJitter(true)
+                ->getWaitTime($this->job->attempts())
+        );
     }
 }

@@ -4,15 +4,15 @@ This package fires events for most all activity throughout the connection and up
 
 ## Connections
 
-### `ConnectionEstablished`
+### `CloudStorageSetup`
 
 Fired when a user completes the OAuth flow, establishing a new cloud storage connection. 
 
-### `ConnectionDisabled`
+### `CloudStorageDisabled`
 
 Fired when a connection is disabled for any reason, such as storage being full or access token being invalid, or a manual disabling.
 
-### `ConnectionEnabled`
+### `CloudStorageEnabled`
 
 Fired when...oh, you know what, I think you have the hang of this by now.
 

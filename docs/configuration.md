@@ -1,4 +1,4 @@
-# Configuration
+# Advanced Configuration
 
 Most of the package configuration can be done using your .env file, which is recommended.
 

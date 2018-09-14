@@ -42,25 +42,6 @@ class GoogleProvider extends Provider implements ProviderContract
     protected $service;
 
     /**
-     * @var string
-     */
-    protected $connectionClass = GoogleConnection::class;
-
-    /**
-     * @param User $user
-     *
-     * @return array
-     */
-    protected function mapUserToConnectionConfig( User $user )
-    {
-        return [
-            'name'  => $user->name,
-            'email' => $user->email,
-            'token' => $user->accessTokenResponseBody
-        ];
-    }
-
-    /**
      * @param $sourcePath
      * @param $destinationPath
      *

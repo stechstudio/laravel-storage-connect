@@ -3,10 +3,10 @@
 namespace STS\StorageConnect;
 
 use Illuminate\Support\ServiceProvider;
-use STS\StorageConnect\Events\ConnectionDisabled;
-use STS\StorageConnect\Events\ConnectionEnabled;
+use STS\StorageConnect\Events\CloudStorageDisabled;
+use STS\StorageConnect\Events\CloudStorageEnabled;
 use STS\StorageConnect\Events\UploadRetrying;
-use STS\StorageConnect\Events\ConnectionEstablished;
+use STS\StorageConnect\Events\CloudStorageSetup;
 use STS\StorageConnect\Events\UploadFailed;
 use STS\StorageConnect\Events\UploadSucceeded;
 
@@ -37,6 +37,8 @@ class StorageConnectServiceProvider extends ServiceProvider
 
         $this->loadRoutesFrom(__DIR__ . '/../routes/web.php');
 
+        $this->loadMigrationsFrom(__DIR__ . '/../migrations');
+
         $this->app->singleton(StorageConnectManager::class, function ($app) {
             return new StorageConnectManager($app);
         });
@@ -58,9 +60,10 @@ class StorageConnectServiceProvider extends ServiceProvider
      */
     protected function listenAndLog()
     {
-        $this->app['events']->listen(ConnectionEstablished::class, function (ConnectionEstablished $event) {
+        $this->app['events']->listen(CloudStorageSetup::class, function (CloudStorageSetup $event) {
             $this->app['log']->info("New cloud storage connection", [
-                'connection' => $event->connection->identify()
+                'storage' => $event->storage->id,
+                'owner' => $event->storage->owner_description
             ]);
         });
 
@@ -86,14 +89,14 @@ class StorageConnectServiceProvider extends ServiceProvider
             ]);
         });
 
-        $this->app['events']->listen(ConnectionDisabled::class, function (ConnectionDisabled $event) {
+        $this->app['events']->listen(CloudStorageDisabled::class, function (CloudStorageDisabled $event) {
             $this->app['log']->warning("Connection disabled: " . $event->message, [
                 'reason'     => $event->reason,
                 'connection' => $event->connection->identify()
             ]);
         });
 
-        $this->app['events']->listen(ConnectionEnabled::class, function (ConnectionEnabled $event) {
+        $this->app['events']->listen(CloudStorageEnabled::class, function (CloudStorageEnabled $event) {
             $this->app['log']->info("Connection enabled", [
                 'connection' => $event->connection->identify()
             ]);

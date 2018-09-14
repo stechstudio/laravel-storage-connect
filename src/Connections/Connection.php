@@ -8,12 +8,12 @@ use Exception;
 use Illuminate\Http\RedirectResponse;
 use STS\Backoff\Backoff;
 use STS\Backoff\Strategies\PolynomialStrategy;
-use STS\StorageConnect\Events\ConnectionDisabled;
-use STS\StorageConnect\Events\ConnectionEnabled;
+use STS\StorageConnect\Events\CloudStorageDisabled;
+use STS\StorageConnect\Events\CloudStorageEnabled;
 use STS\StorageConnect\Events\UploadRetrying;
 use STS\StorageConnect\Events\UploadFailed;
 use STS\StorageConnect\Events\UploadSucceeded;
-use STS\StorageConnect\Exceptions\ConnectionUnavailableException;
+use STS\StorageConnect\Exceptions\StorageUnavailableException;
 use STS\StorageConnect\Jobs\UploadFile;
 use STS\StorageConnect\Providers\DropboxProvider;
 use Log;
@@ -29,7 +29,7 @@ abstract class Connection
     /**
      * @var Illuminate\Database\Eloquent\Model
      */
-    protected $owner;
+    protected $model;
 
     /**
      * @var string
@@ -165,12 +165,12 @@ abstract class Connection
     }
 
     /**
-     * @throws ConnectionUnavailableException
+     * @throws StorageUnavailableException
      */
     public function verifyOrFail()
     {
         if (!$this->verify()) {
-            throw new ConnectionUnavailableException($this);
+            throw new StorageUnavailableException($this);
         }
     }
 
@@ -223,6 +223,8 @@ abstract class Connection
      */
     public function load(array $config)
     {
+        $this->connected =
+
         $this->config = $config;
 
         foreach (['createdAt', 'lastUploadAt', 'disabledAt', 'quotaLastCheckedAt'] as $dtField) {
@@ -305,7 +307,7 @@ abstract class Connection
      * @param bool $queued
      *
      * @return bool
-     * @throws ConnectionUnavailableException
+     * @throws StorageUnavailableException
      */
     public function upload($sourcePath, $remotePath, $queued = true)
     {
@@ -377,7 +379,7 @@ abstract class Connection
 
         $this->save();
 
-        event(new ConnectionDisabled($this, $reason, $message));
+        event(new CloudStorageDisabled($this, $reason, $message));
 
         return $this;
     }
@@ -392,7 +394,7 @@ abstract class Connection
 
         $this->save();
 
-        event(new ConnectionEnabled($this));
+        event(new CloudStorageEnabled($this));
 
         return $this;
     }

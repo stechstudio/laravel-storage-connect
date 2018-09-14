@@ -7,11 +7,12 @@ use Illuminate\Support\Str;
 use Illuminate\Http\RedirectResponse;
 use InvalidArgumentException;
 use SocialiteProviders\Manager\OAuth2\User;
+use STS\StorageConnect\Adapters\DropboxAdapter;
 use STS\StorageConnect\Connections\Connection;
 use STS\StorageConnect\Connections\DropboxConnection;
 use STS\StorageConnect\Connections\GoogleConnection;
 use STS\StorageConnect\Drivers\DropboxDriver;
-use STS\StorageConnect\Events\ConnectionEstablished;
+use STS\StorageConnect\Events\CloudStorageSetup;
 use STS\StorageConnect\Exceptions\UnauthorizedException;
 use STS\StorageConnect\Providers\DropboxProvider;
 use STS\StorageConnect\Providers\GoogleProvider;
@@ -45,7 +46,12 @@ class StorageConnectManager extends Manager
     /**
      * @var array
      */
-    public $connections = [];
+    protected $connections = [];
+
+    /**
+     * @var array
+     */
+    protected $adapters = [];
 
     /**
      * @var string
@@ -181,30 +187,23 @@ class StorageConnectManager extends Manager
     }
 
     /**
-     * Get a connection instance.
-     *
-     * @param  string $driver
-     * @param bool $load
+     * @param null $driver
      *
      * @return mixed
      */
-    public function connection($driver = null, $load = true)
+    public function adapter($driver = null)
     {
         $driver = $driver ?: $this->getDefaultDriver();
 
-        if (!isset($this->connections[$driver])) {
-            $this->connections[$driver] = $this->createConnection($driver);
-
-            if ($load && $this->loadCallback) {
-                $this->connections[$driver]->load(call_user_func($this->loadCallback, $driver));
-            }
+        if (!isset($this->adapters[$driver])) {
+            $this->adapters[$driver] = $this->createAdapter($driver);
         }
 
-        return $this->connections[$driver];
+        return $this->adapters[$driver];
     }
 
     /**
-     * Create a new connection instance.
+     * Create a new adapter instance.
      *
      * @param  string $driver
      *
@@ -212,32 +211,23 @@ class StorageConnectManager extends Manager
      *
      * @throws \InvalidArgumentException
      */
-    protected function createConnection($driver)
+    protected function createAdapter($driver)
     {
-
-        $method = 'create' . Str::studly($driver) . 'Connection';
+        $method = 'create' . Str::studly($driver) . 'Adapter';
 
         if (method_exists($this, $method)) {
             return $this->$method();
         }
 
-        throw new InvalidArgumentException("Connection [$driver] not supported.");
+        throw new InvalidArgumentException("Adapter [$driver] not supported.");
     }
 
     /**
-     * @return DropboxConnection
+     * @return DropboxAdapter
      */
-    protected function createDropboxConnection()
+    protected function createDropboxAdapter()
     {
-        return new DropboxConnection($this->driver('dropbox'));
-    }
-
-    /**
-     * @return GoogleConnection
-     */
-    protected function createGoogleConnection()
-    {
-        return new GoogleConnection($this->driver('google'));
+        return new DropboxAdapter($this);
     }
 
     /**
@@ -266,6 +256,6 @@ class StorageConnectManager extends Manager
      */
     public function __call($method, $parameters)
     {
-        return $this->connection()->$method(...$parameters);
+        return $this->adapter()->$method(...$parameters);
     }
 }

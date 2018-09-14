@@ -2,7 +2,8 @@
 
 namespace STS\StorageConnect\Events;
 
-use STS\StorageConnect\Connections\Connection;
+use STS\StorageConnect\Exceptions\UploadException;
+use STS\StorageConnect\Models\CloudStorage;
 
 /**
  * Class UploadFailed
@@ -11,19 +12,9 @@ use STS\StorageConnect\Connections\Connection;
 class UploadFailed
 {
     /**
-     * @var Connection
+     * @var CloudStorage
      */
-    public $connection;
-
-    /**
-     * @var string
-     */
-    public $message;
-
-    /**
-     * @var string
-     */
-    public $sourcePath;
+    public $storage;
 
     /**
      * @var \Exception
@@ -33,16 +24,12 @@ class UploadFailed
     /**
      * UploadFailed constructor.
      *
-     * @param Connection $connection
-     * @param                    $message
-     * @param \Exception $exception
-     * @param                    $sourcePath
+     * @param CloudStorage $storage
+     * @param UploadException $exception
      */
-    public function __construct(Connection $connection, $message, $exception, $sourcePath)
+    public function __construct(CloudStorage $storage, UploadException $exception)
     {
-        $this->connection = $connection;
-        $this->message = $message;
-        $this->sourcePath = $sourcePath;
+        $this->storage = $storage;
         $this->exception = $exception;
     }
 }

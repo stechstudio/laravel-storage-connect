@@ -12,7 +12,6 @@ module.exports = {
                 children: [
                     '/',
                     '/getting-started',
-                    '/configuration',
                     '/eloquent-managed-connections',
                     '/self-managed-connections'
                 ]
@@ -31,7 +30,8 @@ module.exports = {
                 children: [
                     '/uploading-files',
                     '/connection-api',
-                    '/events'
+                    '/events',
+                    '/configuration',
                 ]
             }
         ]

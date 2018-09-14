@@ -2,7 +2,7 @@
 
 namespace STS\StorageConnect\Events;
 
-use STS\StorageConnect\Connections\Connection;
+use STS\StorageConnect\Models\CloudStorage;
 
 /**
  * Class UploadSucceeded
@@ -11,9 +11,9 @@ use STS\StorageConnect\Connections\Connection;
 class UploadSucceeded
 {
     /**
-     * @var Connection
+     * @var CloudStorage
      */
-    public $connection;
+    public $storage;
 
     /**
      * @var string
@@ -28,13 +28,13 @@ class UploadSucceeded
     /**
      * UploadFailed constructor.
      *
-     * @param Connection $connection
+     * @param CloudStorage $storage
      * @param                    $sourcePath
      * @param $destinationPath
      */
-    public function __construct(Connection $connection, $sourcePath, $destinationPath)
+    public function __construct(CloudStorage $storage, $sourcePath, $destinationPath)
     {
-        $this->connection = $connection;
+        $this->storage = $storage;
         $this->sourcePath = $sourcePath;
         $this->destinationPath = $destinationPath;
     }

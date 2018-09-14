@@ -16,9 +16,10 @@
     ],
     "require": {
         "google/apiclient": "^2.2",
-        "illuminate/queue": "^5.3",
-        "illuminate/support": "^5.3",
-        "illuminate/http": "^5.3",
+        "illuminate/queue": "^5.4",
+        "illuminate/support": "^5.4",
+        "illuminate/http": "^5.4",
+        "illuminate/database": "^5.4",
         "kunalvarma05/dropbox-php-sdk": "dev-master",
         "socialiteproviders/dropbox": "^4.0",
         "socialiteproviders/google": "^3.0",

@@ -2,11 +2,8 @@
 
 namespace STS\StorageConnect\Traits;
 
-use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use SocialiteProviders\Manager\OAuth2\User;
-use STS\StorageConnect\Connections\Connection;
-use STS\StorageConnect\Events\ConnectionEstablished;
-use STS\StorageConnect\Exceptions\UnauthorizedException;
 use STS\StorageConnect\StorageConnectManager;
 
 /**
@@ -31,18 +28,18 @@ trait EnhancedProvider
     protected $user;
 
     /**
-     * @var Connection
+     * @var array
      */
-    protected $connection;
+    protected $token;
 
     /**
      * EnhancedProvider constructor.
      *
-     * @param array                 $config
+     * @param array $config
      * @param StorageConnectManager $manager
      * @param                       $app
      */
-    public function __construct( array $config, StorageConnectManager $manager, $app )
+    public function __construct(array $config, StorageConnectManager $manager, $app)
     {
         $this->fullConfig = $config;
         $this->manager = $manager;
@@ -69,29 +66,19 @@ trait EnhancedProvider
     }
 
     /**
-     * @param Connection $connection
-     * @param $redirectUrl
-     *
-     * @return mixed
-     * @throws UnauthorizedException
+     * @return Request
      */
-    public function authorize($redirectUrl = null, $connection = null)
+    public function request()
     {
-        $response = $this->manager->runBeforeAuthorize($this->name());
+        return $this->request;
+    }
 
-        if($response !== true) {
-            return $response;
-        }
-
-        if($connection instanceof Connection && $connection->owner()) {
-            $this->request->session()->put('storage-connect.owner', $connection->owner());
-        }
-
-        if($redirectUrl != null) {
-            $this->request->session()->put('storage-connect.redirect', $redirectUrl);
-        }
-
-        return $this->redirect();
+    /**
+     * @param $token
+     */
+    public function setToken($token)
+    {
+        $this->token = $token;
     }
 
     /**
@@ -101,27 +88,8 @@ trait EnhancedProvider
     {
         return base64_encode(json_encode(array_merge(
             ['csrf' => str_random(40)],
-            (array) $this->manager->getCustomState()
+            (array)$this->manager->getCustomState()
         )));
-    }
-
-    /**
-     * @return RedirectResponse
-     */
-    public function finish()
-    {
-        $this->connection->initialize($this->mapUserToConnectionConfig($this->user()));
-
-        $settings = $this->request->session()->pull('storage-connect');
-
-        if(array_has($settings, 'owner')) {
-            $this->connection->belongsTo(array_get($settings, 'owner'));
-        }
-
-        $this->connection->save();
-        event(new ConnectionEstablished($this->connection, $this->name()));
-
-        return $this->manager->redirectAfterConnect(array_get($settings, 'redirect'));
     }
 
     /**
@@ -145,38 +113,6 @@ trait EnhancedProvider
     }
 
     /**
-     * @param Connection $connection
-     *
-     * @return $this
-     */
-    public function load(Connection $connection )
-    {
-        $this->connection = $connection;
-
-        return $this;
-    }
-
-    /**
-     * @return Connection
-     */
-    public function connection()
-    {
-        return $this->connection;
-    }
-
-    /**
-     * @param Connection $connection
-     *
-     * @return $this
-     */
-    public function setConnection(Connection $connection)
-    {
-        $this->connection = $connection;
-
-        return $this;
-    }
-
-    /**
      * @return mixed
      */
     public function service()
@@ -186,5 +122,16 @@ trait EnhancedProvider
         }
 
         return $this->service;
+    }
+
+    /**
+     * @param $method
+     * @param $parameters
+     *
+     * @return mixed
+     */
+    public function __call($method, $parameters)
+    {
+        return $this->service()->$method(...$parameters);
     }
 }
