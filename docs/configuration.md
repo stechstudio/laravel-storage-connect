@@ -4,20 +4,6 @@ Most of the package configuration can be done using your .env file, which is rec
 
 If you want to edit the config file directly, first publish it to your own config directory using `php artisan vendor:publish`.
 
-## Default provider
-
-```
-STORAGE_CONNECT_DEFAULT=dropbox
-```
-
-This is used if you are managing connections yourself and make direct calls to the StorageConnect facade without specifying a provider.
-
-```php
-StorageConnect::upload("/path/to/source.pdf","filename.pdf");
-```
-
-This will use the default provider, load the storage from your custom callback, and then proceed to upload.
-
 ## Application name
 
 ```
@@ -44,7 +30,7 @@ STORAGE_CONNECT_AUTHORIZE_ROUTE=true
 
 By default this package create a pre-wired route for kicking off the OAuth flow.
 
-Disable this flag if you want to setup your own routes and avoid this completely.
+Disable this flag if you want to setup your own route and avoid this completely.
 
 ## Route middleware
 
@@ -65,3 +51,17 @@ STORAGE_CONNECT_REDIRECT_AFTER_CONNECT=/dashboard
 You can specify a redirect URL when using the pre-wired authorize route or when calling the authorize method, yourself, on a connection.
 
 If a redirect URL is not explicitly passed in, this config will be used as a fallback.
+
+## Default provider
+
+```
+STORAGE_CONNECT_DEFAULT=dropbox
+```
+
+This is used if you are managing connections yourself and make direct calls to the StorageConnect facade without specifying a provider.
+
+```php
+StorageConnect::upload("/path/to/source.pdf","filename.pdf");
+```
+
+This will use the default provider, load the storage from your custom callback, and then proceed to upload.

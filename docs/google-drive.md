@@ -1,4 +1,4 @@
-# Setup Google Drive
+# Google Drive
 
 If you want to use Google Drive as a storage provider option go through these steps to setup Google configure it in your application.
 

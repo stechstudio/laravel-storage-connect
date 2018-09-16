@@ -1,4 +1,4 @@
-# Setup Dropbox
+# Dropbox
 
 If you want to use Dropbox as a storage provider option go through these steps to create a Dropbox App and configure it in your application.
 

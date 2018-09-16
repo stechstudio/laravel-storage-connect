@@ -7,14 +7,20 @@ module.exports = {
         ],
         sidebar: [
             {
-                title: 'Setup',
+                title: 'Getting Started',
                 collapsable: false,
                 children: [
                     '/',
-                    '/getting-started',
+                    '/installation',
+                    '/configuration'
+                ]
+            },
+            {
+                title: 'Setup Storage Providers',
+                collapsable: false,
+                children: [
                     '/dropbox',
                     '/google-drive',
-                    '/configuration'
                 ]
             },
             {
