@@ -8,6 +8,14 @@ $accentColor=#f1362f
     color: #FFF;
     opacity: 0.8;
     font-size: 1rem;
+    display: flex;
+}
+
+.navbar .site-name::before {
+    content: '⚡';
+    color: transparent;
+    text-shadow: 0 0 0 #f1362f;
+    font-size: 1.5rem;
 }
 
 .navbar .links {
@@ -22,12 +30,6 @@ $accentColor=#f1362f
 .navbar a:hover {
     color: #FFF;
     opacity: 1;
-}
-
-.site-name::before {
-    content: '⚡';
-    color: transparent;
-    text-shadow: 0 0 0 #666;
 }
 
 .sidebar {

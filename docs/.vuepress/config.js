@@ -12,26 +12,26 @@ module.exports = {
                 children: [
                     '/',
                     '/getting-started',
-                    '/eloquent-managed-connections',
-                    '/self-managed-connections'
-                ]
-            },
-            {
-                title: 'Cloud Storage Providers',
-                collapsable: false,
-                children: [
                     '/dropbox',
-                    '/google-drive'
+                    '/google-drive',
+                    '/configuration'
                 ]
             },
             {
-                title: 'How to Use',
+                title: 'Basic Usage',
                 collapsable: false,
                 children: [
+                    '/authorize-storage',
                     '/uploading-files',
-                    '/connection-api',
+                ]
+            },
+            {
+                title: 'Advanced Usage',
+                collapsable: false,
+                children: [
+                    '/storage-api',
                     '/events',
-                    '/configuration',
+                    '/custom-managed-storage'
                 ]
             }
         ]

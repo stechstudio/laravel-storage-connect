@@ -21,7 +21,7 @@ return [
     /**
      * Pre-wire authorization routes. Disable this if you want to create your own routes to kick off OAuth.
      */
-    'authorize_routes' => env('STORAGE_CONNECT_AUTHORIZE_ROUTES', true),
+    'authorize_route' => env('STORAGE_CONNECT_AUTHORIZE_ROUTE', true),
 
     /**
      * The base URI path we'll register for your authorize/callback endpoints

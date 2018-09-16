@@ -1,9 +1,9 @@
-# Uploading Files
+# Upload Files
 
-Once you have a connection setup and loaded you can begin uploading files.
+Once you have a cloud storage authorized and connected you can begin uploading files.
 
 ```php
-$connection->upload('/path/to/source.pdf', 'My File.pdf');
+$model->dropbox->upload('/path/to/source.pdf', 'My File.pdf');
 ```
 
 ## Queued uploads
@@ -13,7 +13,7 @@ By default a queue job is created to handle the upload. This avoids locking up y
 If you really don't want the upload to be queued you can pass false in as a third argument.
 
 ```php
-$connection->upload('/path/to/source.pdf', 'My File.pdf', false);
+$model->dropbox->upload('/path/to/source.pdf', 'My File.pdf', false);
 ```
 
 ## Uploading from S3
@@ -21,15 +21,15 @@ $connection->upload('/path/to/source.pdf', 'My File.pdf', false);
 You can upload files from an S3 bucket by using the `s3://` protocol. This assumes, of course, you have your AWS credentials setup in the .env file and read access to the bucket where the files are stored.
 
 ```php
-$connection->upload('s3://bucket-name/source.pdf', 'My File.pdf');
+$model->dropbox->upload('s3://bucket-name/source.pdf', 'My File.pdf');
 ```
 
-# Uploading from URL
+## Uploading from URL
 
 You can also upload from a URL.
 
 ```php
-$connection->upload('https://www.somewebsite.com/source.pdf', 'My File.pdf');
+$model->dropbox->upload('https://www.somewebsite.com/source.pdf', 'My File.pdf');
 ```
 
 If you are using Dropbox, this will use the `save_url` method. Dropbox will pull the file directly from the URL.

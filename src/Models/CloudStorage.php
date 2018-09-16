@@ -17,6 +17,7 @@ use STS\StorageConnect\Exceptions\StorageUnavailableException;
 use STS\StorageConnect\Exceptions\UploadException;
 use STS\StorageConnect\Jobs\UploadFile;
 use STS\StorageConnect\StorageConnectFacade;
+use STS\StorageConnect\Types\Quota;
 
 /**
  * Class CloudStorage
@@ -24,10 +25,13 @@ use STS\StorageConnect\StorageConnectFacade;
  */
 class CloudStorage extends Model
 {
+    const SPACE_FULL = "full";
+    const INVALID_TOKEN = "invalid";
+
     /**
      * @var array
      */
-    protected $guarded = ["id"];
+    protected $guarded = [];
 
     /**
      * @var array
@@ -49,7 +53,9 @@ class CloudStorage extends Model
      */
     public function adapter()
     {
-        return StorageConnectFacade::adapter($this->driver)->setToken((array)$this->token);
+        return StorageConnectFacade::adapter($this->driver)->setToken((array)$this->token, function ( $token ) {
+            $this->update(['token' => $token]);
+        });
     }
 
     /**
@@ -57,7 +63,9 @@ class CloudStorage extends Model
      */
     public function getOwnerDescriptionAttribute()
     {
-        return array_reverse(explode("\\", $this->owner_type))[0] . ":" . $this->owner_id;
+        return $this->owner
+            ? array_reverse(explode("\\", $this->owner_type))[0] . ":" . $this->owner_id
+            : $this->email;
     }
 
     /**
@@ -65,7 +73,7 @@ class CloudStorage extends Model
      *
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function authorize($redirectUrl = null)
+    public function authorize( $redirectUrl = null )
     {
         return $this->adapter()->authorize($this, $redirectUrl);
     }
@@ -75,12 +83,12 @@ class CloudStorage extends Model
      *
      * @return $this
      */
-    public function disable($reason = null)
+    public function disable( $reason = null )
     {
         $this->enabled = 0;
         $this->reason = $reason;
 
-        if ($reason == "full") {
+        if ($reason == self::SPACE_FULL) {
             $this->full = 1;
         }
 
@@ -107,28 +115,11 @@ class CloudStorage extends Model
     }
 
     /**
-     * @return $this
-     */
-    public function checkSpace()
-    {
-        $this->space_checked_at = Carbon::now();
-        $this->update($this->adapter()->getQuota());
-
-        if ($this->full && $this->percent_full < 99) {
-            $this->enable();
-        } else if (!$this->full && $this->percent_full > 99) {
-            $this->disable('full');
-        }
-
-        return $this;
-    }
-
-    /**
      * @return bool
      */
     public function verify()
     {
-        if ($this->full && $this->space_checked_at->diffInMinutes(Carbon::now()) > 60) {
+        if ($this->full && $this->shouldCheckSpace()) {
             $this->checkSpace();
         }
 
@@ -136,15 +127,39 @@ class CloudStorage extends Model
     }
 
     /**
-     * @param $sourcePath
-     * @param $destinationPath
+     * @return bool
+     */
+    protected function shouldCheckSpace()
+    {
+        return $this->space_checked_at && $this->space_checked_at->diffInMinutes(Carbon::now()) > 60;
+    }
+
+    /**
+     * @return $this
+     */
+    public function checkSpace()
+    {
+        $this->update($this->adapter()->getQuota()->toArray());
+
+        if ($this->full && $this->percent_full < 99) {
+            $this->enable();
+        } else if (!$this->full && $this->percent_full > 99) {
+            $this->disable(self::SPACE_FULL);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @param      $sourcePath
+     * @param      $destinationPath
      * @param bool $queue
      * @param null $queuedJob
      *
      * @return bool
      * @throws StorageUnavailableException
      */
-    public function upload($sourcePath, $destinationPath, $queue = true, $queuedJob = null)
+    public function upload( $sourcePath, $destinationPath, $queue = true, $queuedJob = null )
     {
         if (!$this->verify()) {
             throw new StorageUnavailableException($this);
@@ -169,7 +184,7 @@ class CloudStorage extends Model
      *
      * @return bool
      */
-    protected function handleUpload($sourcePath, $destinationPath)
+    protected function handleUpload( $sourcePath, $destinationPath )
     {
         if (starts_with($sourcePath, "s3://")) {
             app('aws')->createClient('s3')->registerStreamWrapper();
@@ -187,9 +202,9 @@ class CloudStorage extends Model
 
     /**
      * @param UploadException $e
-     * @param null $job
+     * @param null            $job
      */
-    protected function handleUploadError(UploadException $e, $job = null)
+    protected function handleUploadError( UploadException $e, $job = null )
     {
         $e->setStorage($this);
 

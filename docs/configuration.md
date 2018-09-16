@@ -1,4 +1,4 @@
-# Advanced Configuration
+# Configuration
 
 Most of the package configuration can be done using your .env file, which is recommended.
 
@@ -16,7 +16,7 @@ This is used if you are managing connections yourself and make direct calls to t
 StorageConnect::upload("/path/to/source.pdf","filename.pdf");
 ```
 
-This will use the default provider, load the connection from your custom load callback, and then proceed to upload.
+This will use the default provider, load the storage from your custom callback, and then proceed to upload.
 
 ## Application name
 
@@ -39,12 +39,12 @@ If you'd like activity logging, set this to true.
 ## Authorize routes
 
 ```
-STORAGE_CONNECT_AUTHORIZE_ROUTES=true
+STORAGE_CONNECT_AUTHORIZE_ROUTE=true
 ```
 
-By default this package create two pre-wired routes for kicking off the OAuth flow. One for [Eloquent-managed connections](./eloquent-managed-connections) and one for [self-managed connections](./self-managed-connections).
+By default this package create a pre-wired route for kicking off the OAuth flow.
 
-Disable this flag if you want to setup your own routes and avoid these completely. Note the callback route will still be wired up, that one is required.
+Disable this flag if you want to setup your own routes and avoid this completely.
 
 ## Route middleware
 
@@ -52,7 +52,7 @@ Disable this flag if you want to setup your own routes and avoid these completel
 STORAGE_CONNECT_MIDDLEWARE=web
 ```
 
-This package provides a handful of pre-wired routes for kicking off OAuth and handling the callback. By default, the web middleware group is specified for these routes.
+The pre-wired authorize route uses the `web` middleware group by default. 
 
 You can change this by specifying a middleware name (or group name) here. If you change this make sure your middleware group includes `session` so that CSRF is handled during the OAuth flow.
 

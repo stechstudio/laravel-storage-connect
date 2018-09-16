@@ -2,7 +2,7 @@
 
 This package fires events for most all activity throughout the connection and upload process. 
 
-## Connections
+## Storage
 
 ### `CloudStorageSetup`
 

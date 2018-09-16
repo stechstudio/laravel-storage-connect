@@ -1,6 +1,6 @@
-# Dropbox
+# Setup Dropbox
 
-Dropbox is the default storage provider and most commonly used.
+If you want to use Dropbox as a storage provider option go through these steps to create a Dropbox App and configure it in your application.
 
 ## Create your Dropbox app
 
@@ -17,4 +17,4 @@ This package uses `/storage-connect/callback/dropbox` as the path for the Dropbo
 
 ## Copy your credentials
 
-Copy the App key and the App secret, store them as `DROPBOX_KEY` and `DROPBOX_SECRET` in your .env file, respectively.
+Copy the App key and the App secret, store them as `DROPBOX_KEY` and `DROPBOX_SECRET`**** in your .env file, respectively.

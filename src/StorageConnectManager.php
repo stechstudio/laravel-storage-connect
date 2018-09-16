@@ -2,18 +2,14 @@
 
 namespace STS\StorageConnect;
 
+use Carbon\Carbon;
 use Illuminate\Support\Manager;
 use Illuminate\Support\Str;
 use Illuminate\Http\RedirectResponse;
 use InvalidArgumentException;
-use SocialiteProviders\Manager\OAuth2\User;
 use STS\StorageConnect\Adapters\DropboxAdapter;
-use STS\StorageConnect\Connections\Connection;
-use STS\StorageConnect\Connections\DropboxConnection;
-use STS\StorageConnect\Connections\GoogleConnection;
-use STS\StorageConnect\Drivers\DropboxDriver;
-use STS\StorageConnect\Events\CloudStorageSetup;
-use STS\StorageConnect\Exceptions\UnauthorizedException;
+use STS\StorageConnect\Adapters\GoogleAdapter;
+use STS\StorageConnect\Models\CloudStorage;
 use STS\StorageConnect\Providers\DropboxProvider;
 use STS\StorageConnect\Providers\GoogleProvider;
 
@@ -39,19 +35,9 @@ class StorageConnectManager extends Manager
     protected $loadCallback;
 
     /**
-     * @var callable
-     */
-    protected $beforeAuthorizeCallback;
-
-    /**
      * @var array
      */
-    protected $connections = [];
-
-    /**
-     * @var array
-     */
-    protected $adapters = [];
+    protected $instances = [];
 
     /**
      * @var string
@@ -67,52 +53,46 @@ class StorageConnectManager extends Manager
     }
 
     /**
-     * @return DropboxProvider
-     */
-    public function createDropboxDriver()
-    {
-        return new DropboxProvider($this->app['config']['services.dropbox'], $this, $this->app);
-    }
-
-    /**
-     * @return GoogleProvider
-     */
-    public function createGoogleDriver()
-    {
-        return new GoogleProvider($this->app['config']['services.google'], $this, $this->app);
-    }
-
-    /**
-     * @param $driver
-     *
-     * @return bool
-     */
-    public function isSupportedDriver($driver)
-    {
-        return in_array($driver, $this->app['config']['storage-connect.enabled'])
-            && is_array($this->app['config']["services.$driver"]);
-    }
-
-    /**
      * @param string $driver
      *
-     * @return mixed
+     * @return CloudStorage
      */
     protected function createDriver($driver)
     {
-        if (!$this->isSupportedDriver($driver)) {
-            throw new InvalidArgumentException("Driver [$driver] not supported.");
+        $attributes = call_user_func($this->loadCallback, $driver);
+
+        if(!is_array($attributes)) {
+            $attributes = json_decode($attributes, true);
         }
 
-        return parent::createDriver($driver);
+        if(is_array($attributes) && array_key_exists('driver', $attributes)) {
+            $instance = new CloudStorage($attributes);
+        } else {
+            $instance = new CloudStorage([
+                'driver' => $driver,
+                'id' => 0
+            ]);
+        }
+
+        $instance::saving(function(CloudStorage $storage) {
+            if(!$storage->created_at) {
+                $storage->setCreatedAt(Carbon::now());
+            }
+            $storage->setUpdatedAt(Carbon::now());
+            call_user_func_array($this->saveCallback, [$storage->toJson(), $storage->driver]);
+
+            return false;
+        });
+
+        return $instance;
     }
 
     /**
-     * @return array
+     * @param $callback
      */
-    public function getCustomState()
+    public function loadUsing($callback)
     {
-        return self::$includeState;
+        $this->loadCallback = $callback;
     }
 
     /**
@@ -121,47 +101,6 @@ class StorageConnectManager extends Manager
     public function saveUsing($callback)
     {
         $this->saveCallback = $callback;
-    }
-
-    /**
-     * @param Connection $connection
-     * @param $driver
-     *
-     * @return mixed
-     */
-    public function save(Connection $connection, $driver)
-    {
-        call_user_func_array($this->saveCallback, [$connection, $driver]);
-    }
-
-    public function beforeAuthorize($callback)
-    {
-        $this->beforeAuthorizeCallback = $callback;
-    }
-
-    /**
-     * @param $driver
-     *
-     * @return bool|mixed
-     * @throws UnauthorizedException
-     */
-    public function runBeforeAuthorize($driver)
-    {
-        if(!$this->beforeAuthorizeCallback) {
-            return true;
-        }
-
-        $response = call_user_func($this->beforeAuthorizeCallback, $driver);
-
-        if($response instanceof RedirectResponse) {
-            return $response;
-        }
-
-        if($response === false) {
-            throw new UnauthorizedException();
-        }
-
-        return true;
     }
 
     /**
@@ -179,47 +118,13 @@ class StorageConnectManager extends Manager
     }
 
     /**
-     * @param $callback
-     */
-    public function loadUsing($callback)
-    {
-        $this->loadCallback = $callback;
-    }
-
-    /**
      * @param null $driver
      *
      * @return mixed
      */
     public function adapter($driver = null)
     {
-        $driver = $driver ?: $this->getDefaultDriver();
-
-        if (!isset($this->adapters[$driver])) {
-            $this->adapters[$driver] = $this->createAdapter($driver);
-        }
-
-        return $this->adapters[$driver];
-    }
-
-    /**
-     * Create a new adapter instance.
-     *
-     * @param  string $driver
-     *
-     * @return mixed
-     *
-     * @throws \InvalidArgumentException
-     */
-    protected function createAdapter($driver)
-    {
-        $method = 'create' . Str::studly($driver) . 'Adapter';
-
-        if (method_exists($this, $method)) {
-            return $this->$method();
-        }
-
-        throw new InvalidArgumentException("Adapter [$driver] not supported.");
+        return $this->createTypes('adapter', $driver);
     }
 
     /**
@@ -227,7 +132,41 @@ class StorageConnectManager extends Manager
      */
     protected function createDropboxAdapter()
     {
-        return new DropboxAdapter($this);
+        return new DropboxAdapter($this->app['config']['services.dropbox'], $this);
+    }
+
+    /**
+     * @return GoogleAdapter
+     */
+    protected function createGoogleAdapter()
+    {
+        return new GoogleAdapter($this->app['config']['services.google'], $this);
+    }
+
+    /**
+     * @param null $driver
+     *
+     * @return mixed
+     */
+    public function provider($driver = null)
+    {
+        return $this->createTypes('provider', $driver);
+    }
+
+    /**
+     * @return DropboxProvider
+     */
+    protected function createDropboxProvider()
+    {
+        return new DropboxProvider($this->app['config']['services.dropbox'], $this->app['request'], self::$includeState);
+    }
+
+    /**
+     * @return GoogleProvider
+     */
+    public function createGoogleProvider()
+    {
+        return new GoogleProvider($this->app['config']['services.google'], $this->app['request'], self::$includeState);
     }
 
     /**
@@ -256,6 +195,46 @@ class StorageConnectManager extends Manager
      */
     public function __call($method, $parameters)
     {
-        return $this->adapter()->$method(...$parameters);
+        return $this->driver()->$method(...$parameters);
+    }
+
+    /**
+     * @param $type
+     * @param $driver
+     *
+     * @return mixed
+     */
+    protected function createTypes( $type, $driver)
+    {
+        $driver = $driver ?: $this->getDefaultDriver();
+
+        if (!$this->isSupportedDriver($driver)) {
+            throw new InvalidArgumentException("Driver [$driver] not supported.");
+        }
+
+        if (!isset($this->instances[$type][$driver])) {
+            $method = 'create' . Str::studly($driver) . Str::studly($type);
+
+            if (method_exists($this, $method)) {
+                $this->instances[$type][$driver] = $this->$method();
+            } else {
+                throw new InvalidArgumentException(Str::studly($type) . " [$driver] not supported.");
+            }
+        }
+
+        return $this->instances[$type][$driver];
+    }
+
+    /**
+     * @param $driver
+     *
+     * @return bool
+     */
+    protected function isSupportedDriver($driver)
+    {
+        return in_array($driver, $this->app['config']['storage-connect.enabled'])
+            && is_array($this->app['config']["services.$driver"])
+            && $this->app['config']["services.$driver.client_id"] != null
+            && $this->app['config']["services.$driver.client_secret"] != null;
     }
 }

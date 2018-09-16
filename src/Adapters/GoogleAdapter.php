@@ -2,8 +2,11 @@
 
 namespace STS\StorageConnect\Adapters;
 
+use Google_Client;
+use Google_Service_Drive;
 use Kunnu\Dropbox\Exceptions\DropboxClientException;
 use STS\StorageConnect\Exceptions\UploadException;
+use STS\StorageConnect\Types\Quota;
 
 class GoogleAdapter extends Adapter
 {
@@ -26,81 +29,35 @@ class GoogleAdapter extends Adapter
     }
 
     /**
-     * @return array
+     * @return Quota
      */
     public function getQuota()
     {
-        $usage = $this->provider->getSpaceUsage();
+        $about = $this->service()->about->get();
 
-        $totalSpace = array_get($usage, "allocation.allocated", 0);
-        $spaceUsed = array_get($usage, "used", 0);
-
-        return [
-            'total_space'     => $totalSpace,
-            'space_used'      => $spaceUsed,
-            'space_available' => $totalSpace - $spaceUsed,
-            'percent_full'    => $totalSpace > 0
-                ? round(($spaceUsed / $totalSpace) * 100, 1)
-                : 0
-        ];
+        return new Quota($about->getQuotaBytesTotal(), $about->getQuotaBytesUsed());
     }
 
     /**
-     * @param $sourcePath
-     * @param $destinationPath
-     *
-     * @return mixed
-     * @throws UploadException
+     * @return Google_Service_Drive
      */
-    public function upload($sourcePath, $destinationPath)
+    protected function makeService()
     {
-        $destinationPath = str_start($destinationPath, '/');
+        $client = new Google_Client([
+            'client_id'     => $this->fullConfig['client_id'],
+            'client_secret' => $this->fullConfig['client_secret']
+        ]);
 
-        try {
-            if (starts_with($sourcePath, "http")) {
-                return $this->provider->saveUrl($destinationPath, $sourcePath);
-            }
+        $client->setApplicationName(
+            $this->app['config']->get('storage-connect.app_name', $this->app['config']->get('app.name'))
+        );
 
-            return $this->provider->upload($sourcePath, $destinationPath, [
-                'mode' => 'overwrite'
-            ]);
-        } catch (DropboxClientException $e) {
-            throw $this->handleException($e, new UploadException($sourcePath, $e));
-        }
-    }
+        $client->setAccessToken($this->token);
 
-    /**
-     * @param DropboxClientException $e
-     * @param UploadException $uploadException
-     *
-     * @return UploadException
-     */
-    protected function handleException(DropboxClientException $e, UploadException $uploadException)
-    {
-        // First check for connection failure
-        if(str_contains($e->getMessage(), "Connection timed out")) {
-            return $uploadException->setRetry("Connection timeout");
+        if ($client->isAccessTokenExpired()) {
+            $this->updateToken($client->refreshToken($client->getRefreshToken()));
         }
 
-        // See if we have a parseable error
-        $error = json_decode($e->getMessage(), true);
-
-        if(!is_array($error)) {
-            return $uploadException->setRetry("Unknown error uploading file to Dropbox: " . $e->getMessage());
-        }
-
-        if(str_contains(array_get($error, 'error_summary'), "insufficient_space")) {
-            return $uploadException->setDisable("Dropbox account is full", self::STORAGE_FULL);
-        }
-
-        if(str_contains(array_get($error, 'error_summary'), "invalid_access_token")) {
-            return $uploadException->setDisable("Dropbox integration is invalid", self::INVALID_ACCESS_TOKEN);
-        }
-
-        if(str_contains(array_get($error, 'error_summary'), 'too_many_write_operations')) {
-            return $uploadException->setRetry("Hit rate limit");
-        }
-
-        return $uploadException->setRetry("Unknown Dropbox exception: " . $e->getMessage());
+        return new Google_Service_Drive($client);
     }
 }

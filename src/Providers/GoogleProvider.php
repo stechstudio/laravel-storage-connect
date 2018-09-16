@@ -9,7 +9,7 @@ use Google_Service_Drive_DriveFile;
 use SocialiteProviders\Google\Provider;
 use SocialiteProviders\Manager\OAuth2\User;
 use STS\StorageConnect\Connections\GoogleConnection;
-use STS\StorageConnect\Traits\EnhancedProvider;
+use STS\StorageConnect\Traits\ProvidesOAuth;
 use Log;
 
 /**
@@ -18,7 +18,7 @@ use Log;
  */
 class GoogleProvider extends Provider implements ProviderContract
 {
-    use EnhancedProvider;
+    use ProvidesOAuth;
 
     /**
      * @var array
@@ -185,39 +185,5 @@ class GoogleProvider extends Provider implements ProviderContract
             'spaces' => 'drive',
             'fields' => 'files(id, name)',
         ]))->first();
-    }
-
-    /**
-     * @return float
-     */
-    public function percentFull()
-    {
-        $about = $this->service()->about->get();
-
-        return round(($about->getQuotaBytesUsed() / $about->getQuotaBytesTotal()) * 100, 1);
-    }
-
-    /**
-     * @return Google_Service_Drive
-     */
-    protected function makeService()
-    {
-        $client = new Google_Client([
-            'client_id'     => $this->fullConfig['client_id'],
-            'client_secret' => $this->fullConfig['client_secret']
-        ]);
-
-        $client->setApplicationName(
-            $this->app['config']->get('storage-connect.app_name', $this->app['config']->get('app.name'))
-        );
-
-        $client->setAccessToken($this->connection->token);
-
-        if ($client->isAccessTokenExpired()) {
-            $this->connection->token = $client->refreshToken($client->getRefreshToken());
-            $this->connection->save();
-        }
-
-        return new Google_Service_Drive($client);
     }
 }

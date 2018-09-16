@@ -9,9 +9,19 @@ use STS\StorageConnect\StorageConnectManager;
 abstract class Adapter
 {
     /**
+     * @var
+     */
+    protected $config;
+
+    /**
      * @var StorageConnectManager
      */
     protected $manager;
+
+    /**
+     * @var mixed
+     */
+    protected $service;
 
     /**
      * @var array
@@ -19,25 +29,42 @@ abstract class Adapter
     protected $token;
 
     /**
+     * @var callable
+     */
+    protected $tokenUpdateCallback;
+
+    /**
      * DropboxAdapter constructor.
      *
+     * @param array                 $config
      * @param StorageConnectManager $manager
      */
-    public function __construct(StorageConnectManager $manager)
+    public function __construct(array $config, StorageConnectManager $manager)
     {
+        $this->config = $config;
         $this->manager = $manager;
     }
 
     /**
      * @param $token
+     * @paran $callback
      *
      * @return $this
      */
-    public function setToken($token)
+    public function setToken($token, $callback)
     {
         $this->token = $token;
+        $this->tokenUpdateCallback = $callback;
 
         return $this;
+    }
+
+    /**
+     * @param $token
+     */
+    protected function updateToken($token)
+    {
+        call_user_func($this->tokenUpdateCallback, $token);
     }
 
     /**
@@ -52,10 +79,10 @@ abstract class Adapter
             $storage->save();
         }
 
-        $this->provider()->request()->session()->put('storage-connect.id', $storage->id);
+        $this->provider()->session()->put('storage-connect.id', $storage->id);
 
         if($redirectUrl != null) {
-            $this->provider()->request()->session()->session()->put('storage-connect.redirect', $redirectUrl);
+            $this->provider()->session()->session()->put('storage-connect.redirect', $redirectUrl);
         }
 
         return $this->provider()->redirect();
@@ -66,8 +93,9 @@ abstract class Adapter
      */
     public function finish()
     {
-        $props = $this->provider()->request()->session()->pull('storage-connect');
+        $props = $this->provider()->session()->pull('storage-connect');
 
+        /** @var CloudStorage $storage */
         $storage = CloudStorage::findOrFail($props['id']);
         $storage->update(array_merge(
             $this->mapUserDetails($this->provider()->user()),
@@ -85,11 +113,11 @@ abstract class Adapter
     }
 
     /**
-     * @return mixed
+     * @return string
      */
-    public function name()
+    public function driver()
     {
-        return $this->name;
+        return $this->driver;
     }
 
     /**
@@ -97,8 +125,33 @@ abstract class Adapter
      */
     protected function provider()
     {
-        return $this->manager->driver($this->name());
+        return $this->manager->provider($this->driver());
     }
+
+    /**
+     * @return mixed
+     */
+    public function service()
+    {
+        if (!$this->service) {
+            $this->service = $this->makeService();
+        }
+
+        return $this->service;
+    }
+
+    /**
+     * @param $method
+     * @param $parameters
+     *
+     * @return mixed
+     */
+    public function __call($method, $parameters)
+    {
+        return $this->service()->$method(...$parameters);
+    }
+
+    abstract protected function makeService();
 
     abstract function getQuota();
 
