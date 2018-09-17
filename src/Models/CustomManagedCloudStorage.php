@@ -2,6 +2,12 @@
 
 namespace STS\StorageConnect\Models;
 
+use Carbon\Carbon;
+
+/**
+ * Class CustomManagedCloudStorage
+ * @package STS\StorageConnect\Models
+ */
 class CustomManagedCloudStorage extends CloudStorage
 {
     /**
@@ -9,7 +15,13 @@ class CustomManagedCloudStorage extends CloudStorage
      */
     protected $saveCallback;
 
-    public static function setup($driver, $saveCallback)
+    /**
+     * @param $driver
+     * @param $saveCallback
+     *
+     * @return CustomManagedCloudStorage
+     */
+    public static function init($driver, $saveCallback)
     {
         return (new static)
             ->setSaveCallback($saveCallback)
@@ -20,9 +32,26 @@ class CustomManagedCloudStorage extends CloudStorage
     }
 
     /**
+     * @param array|string $attributes
+     * @param $saveCallback
+     *
+     * @return $this|CloudStorage
+     */
+    public function restore($attributes, $saveCallback)
+    {
+        $this->fill($attributes);
+        $this->saveCallback = $saveCallback;
+        $this->exists = true;
+
+        return $this;
+    }
+
+    /**
+     * @param array $options
+     *
      * @return bool|void
      */
-    public function save()
+    public function save(array $options = [])
     {
         if (!$this->created_at) {
             $this->setCreatedAt(Carbon::now());

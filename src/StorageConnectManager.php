@@ -23,7 +23,7 @@ class StorageConnectManager extends Manager
     /**
      * @var array
      */
-    public static $includeState = [];
+    protected $includeState = [];
 
     /**
      * @var callable
@@ -80,9 +80,9 @@ class StorageConnectManager extends Manager
         }
 
         if (is_array($attributes) && array_key_exists('driver', $attributes)) {
-            $instance = new CustomManagedCloudStorage($attributes);
+            $instance = (new CustomManagedCloudStorage)->restore($attributes, $this->saveCallback);
         } else {
-            $instance = CustomManagedCloudStorage::setup($driver, $this->saveCallback);
+            $instance = CustomManagedCloudStorage::init($driver, $this->saveCallback);
         }
 
         return $instance;
@@ -102,6 +102,14 @@ class StorageConnectManager extends Manager
     public function saveUsing($callback)
     {
         $this->saveCallback = $callback;
+    }
+
+    /**
+     * @param array $state
+     */
+    public function includeState(array $state)
+    {
+        $this->includeState = array_merge($this->includeState, $state);
     }
 
     /**
@@ -177,7 +185,7 @@ class StorageConnectManager extends Manager
      */
     protected function createDropboxProvider()
     {
-        return new DropboxProvider($this->app['config']['services.dropbox'], $this->app['request'], self::$includeState);
+        return new DropboxProvider($this->app['config']['services.dropbox'], $this->app['request'], $this->includeState);
     }
 
     /**
@@ -185,7 +193,7 @@ class StorageConnectManager extends Manager
      */
     public function createGoogleProvider()
     {
-        return new GoogleProvider($this->app['config']['services.google'], $this->app['request'], self::$includeState);
+        return new GoogleProvider($this->app['config']['services.google'], $this->app['request'], $this->includeState);
     }
 
     /**
@@ -202,6 +210,14 @@ class StorageConnectManager extends Manager
         }
 
         return $this->app['config']->get('app.name');
+    }
+
+    /**
+     * @return CloudStorage
+     */
+    public function instance()
+    {
+        return $this->driver();
     }
 
     /**

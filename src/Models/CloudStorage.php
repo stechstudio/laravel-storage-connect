@@ -25,7 +25,13 @@ use STS\StorageConnect\Types\Quota;
  */
 class CloudStorage extends Model
 {
+    /**
+     *
+     */
     const SPACE_FULL = "full";
+    /**
+     *
+     */
     const INVALID_TOKEN = "invalid";
 
     /**
@@ -49,16 +55,6 @@ class CloudStorage extends Model
     }
 
     /**
-     * @return Adapter
-     */
-    public function adapter()
-    {
-        return StorageConnectFacade::adapter($this->driver)->setToken((array)$this->token, function ($token) {
-            $this->update(['token' => $token]);
-        });
-    }
-
-    /**
      * @return string
      */
     public function getOwnerDescriptionAttribute()
@@ -76,6 +72,62 @@ class CloudStorage extends Model
     public function authorize($redirectUrl = null)
     {
         return $this->adapter()->authorize($this, $redirectUrl);
+    }
+
+    /**
+     * @return mixed
+     */
+    public function isConnected()
+    {
+        return $this->connected;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isEnabled()
+    {
+        return $this->isConnected() && $this->enabled;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isDisabled()
+    {
+        return !$this->isEnabled();
+    }
+
+    /**
+     * @return mixed
+     */
+    public function isFull()
+    {
+        return $this->full;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function percentFull()
+    {
+        return $this->percent_full;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getUserName()
+    {
+        return $this->name;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getUserEmail()
+    {
+        return $this->email;
     }
 
     /**
@@ -105,6 +157,7 @@ class CloudStorage extends Model
     {
         $this->reason = null;
         $this->enabled = 1;
+        $this->full = 0;
 
         $this->save();
         event(new CloudStorageEnabled($this));
@@ -149,28 +202,38 @@ class CloudStorage extends Model
     }
 
     /**
+     * @return Adapter
+     */
+    public function adapter()
+    {
+        return StorageConnectFacade::adapter($this->driver)->setToken((array)$this->token, function ($token) {
+            $this->update(['token' => $token]);
+        });
+    }
+
+    /**
      * @param      $sourcePath
      * @param      $destinationPath
-     * @param bool $queue
-     * @param null $queuedJob
+     * @param bool $shouldQueue
+     * @param null $queueJob
      *
      * @return bool
      * @throws StorageUnavailableException
      */
-    public function upload($sourcePath, $destinationPath, $queue = true, $queuedJob = null)
+    public function upload($sourcePath, $destinationPath, $shouldQueue = true, $queueJob = null)
     {
         if (!$this->verify()) {
             throw new StorageUnavailableException($this);
         }
 
-        if ($queue) {
+        if ($shouldQueue) {
             return dispatch(new UploadFile($sourcePath, $destinationPath, $this));
         }
 
         try {
             return $this->handleUpload($sourcePath, $destinationPath);
         } catch (UploadException $exception) {
-            $this->handleUploadError($exception, $queuedJob);
+            $this->handleUploadError($exception, $queueJob);
         }
 
         return false;
@@ -201,6 +264,8 @@ class CloudStorage extends Model
     /**
      * @param UploadException $exception
      * @param null $job
+     *
+     * @return mixed
      */
     protected function handleUploadError(UploadException $exception, $job = null)
     {
@@ -210,6 +275,8 @@ class CloudStorage extends Model
             event(new UploadRetrying($this, $exception, $exception->getSourcePath()));
 
             $job->release();
+
+            return;
         }
 
         if ($exception->shouldDisable()) {
@@ -217,7 +284,7 @@ class CloudStorage extends Model
         }
 
         if ($job) {
-            $job->delete();
+            $job->fail($exception);
         }
 
         event(new UploadFailed($this, $exception, $exception->getSourcePath()));

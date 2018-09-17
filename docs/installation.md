@@ -31,7 +31,7 @@ php artisan migrate
 
 ## Configure storage providers
 
-Currently Dropbox and Google Drive are the supported cloud storage backends.
+Currently [Dropbox](dropbox.md) and [Google Drive](google-drive.md) are the supported cloud storage backends.
 
 To use either (or both) you need to ensure your config/services.php file is setup properly:
 

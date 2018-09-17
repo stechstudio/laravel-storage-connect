@@ -74,14 +74,14 @@ abstract class Adapter
     }
 
     /**
-     * @param $storage
+     * @param CloudStorage $storage
      * @param null $redirectUrl
      *
      * @return RedirectResponse
      */
-    public function authorize($storage, $redirectUrl = null)
+    public function authorize(CloudStorage $storage, $redirectUrl = null)
     {
-        if(!$storage->exists()) {
+        if(!$storage->exists) {
             $storage->save();
         }
 
@@ -92,7 +92,7 @@ abstract class Adapter
         }
 
         if($redirectUrl != null) {
-            $this->provider()->session()->session()->put('storage-connect.redirect', $redirectUrl);
+            $this->provider()->session()->put('storage-connect.redirect', $redirectUrl);
         }
 
         return $this->provider()->redirect();
