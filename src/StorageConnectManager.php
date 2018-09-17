@@ -13,6 +13,7 @@ use STS\StorageConnect\Models\CloudStorage;
 use STS\StorageConnect\Models\CustomManagedCloudStorage;
 use STS\StorageConnect\Providers\DropboxProvider;
 use STS\StorageConnect\Providers\GoogleProvider;
+use UnexpectedValueException;
 
 /**
  * Class StorageConnectManager
@@ -58,12 +59,26 @@ class StorageConnectManager extends Manager
      *
      * @return bool
      */
-    protected function isSupportedDriver($driver)
+    public function isSupportedDriver($driver)
     {
         return in_array($driver, $this->app['config']['storage-connect.enabled'])
             && is_array($this->app['config']["services.$driver"])
             && $this->app['config']["services.$driver.client_id"] != null
             && $this->app['config']["services.$driver.client_secret"] != null;
+    }
+
+    /**
+     * @param $driver
+     *
+     * @return bool
+     */
+    public function verifyDriver($driver)
+    {
+        if(!$this->isSupportedDriver($driver)) {
+            throw new InvalidArgumentException("Driver [$driver] not supported.");
+        }
+
+        return true;
     }
 
     /**
@@ -73,7 +88,7 @@ class StorageConnectManager extends Manager
      */
     protected function createDriver($driver)
     {
-        $attributes = call_user_func($this->loadCallback, $driver);
+        $attributes = $this->load($driver);
 
         if (!is_array($attributes)) {
             $attributes = json_decode($attributes, true);
@@ -94,6 +109,20 @@ class StorageConnectManager extends Manager
     public function loadUsing($callback)
     {
         $this->loadCallback = $callback;
+    }
+
+    /**
+     * @param $driver
+     *
+     * @return mixed
+     */
+    protected function load($driver)
+    {
+        if(!$this->loadCallback) {
+            throw new UnexpectedValueException("No callback provided to load storage connection");
+        }
+
+        return call_user_func($this->loadCallback, $driver);
     }
 
     /**

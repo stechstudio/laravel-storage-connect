@@ -55,10 +55,10 @@ Add the `ConnectsToCloudStorage` trait to any Eloquent model, for example:
 ```php
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\TestUser;
 use STS\StorageConnect\Traits\ConnectsToCloudStorage;
 
-class User extends Model {
+class User extends TestUser {
     use ConnectsToCloudStorage;
     
     ...

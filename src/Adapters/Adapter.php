@@ -81,6 +81,8 @@ abstract class Adapter
      */
     public function authorize(CloudStorage $storage, $redirectUrl = null)
     {
+        $this->manager->verifyDriver($storage->driver);
+
         if(!$storage->exists) {
             $storage->save();
         }

@@ -43,7 +43,10 @@ class CloudStorage extends Model
      * @var array
      */
     protected $casts = [
-        'token' => 'array'
+        'token' => 'array',
+        'connected' => 'boolean',
+        'enabled' => 'boolean',
+        'full' => 'boolean'
     ];
 
     /**
@@ -96,6 +99,14 @@ class CloudStorage extends Model
     public function isDisabled()
     {
         return !$this->isEnabled();
+    }
+
+    /**
+     * @return bool
+     */
+    public function isTokenInvalid()
+    {
+        return $this->isDisabled() && $this->reason == self::INVALID_TOKEN;
     }
 
     /**
