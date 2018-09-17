@@ -19,17 +19,24 @@ class UploadFailed
     /**
      * @var \Exception
      */
-    protected $exception;
+    public $exception;
+
+    /**
+     * @var string
+     */
+    public $sourcePath;
 
     /**
      * UploadFailed constructor.
      *
      * @param CloudStorage $storage
      * @param UploadException $exception
+     * @param $sourcePath
      */
-    public function __construct(CloudStorage $storage, UploadException $exception)
+    public function __construct(CloudStorage $storage, UploadException $exception, $sourcePath )
     {
         $this->storage = $storage;
         $this->exception = $exception;
+        $this->sourcePath = $sourcePath;
     }
 }

@@ -10,6 +10,7 @@ use InvalidArgumentException;
 use STS\StorageConnect\Adapters\DropboxAdapter;
 use STS\StorageConnect\Adapters\GoogleAdapter;
 use STS\StorageConnect\Models\CloudStorage;
+use STS\StorageConnect\Models\CustomManagedCloudStorage;
 use STS\StorageConnect\Providers\DropboxProvider;
 use STS\StorageConnect\Providers\GoogleProvider;
 
@@ -53,6 +54,19 @@ class StorageConnectManager extends Manager
     }
 
     /**
+     * @param $driver
+     *
+     * @return bool
+     */
+    protected function isSupportedDriver($driver)
+    {
+        return in_array($driver, $this->app['config']['storage-connect.enabled'])
+            && is_array($this->app['config']["services.$driver"])
+            && $this->app['config']["services.$driver.client_id"] != null
+            && $this->app['config']["services.$driver.client_secret"] != null;
+    }
+
+    /**
      * @param string $driver
      *
      * @return CloudStorage
@@ -61,28 +75,15 @@ class StorageConnectManager extends Manager
     {
         $attributes = call_user_func($this->loadCallback, $driver);
 
-        if(!is_array($attributes)) {
+        if (!is_array($attributes)) {
             $attributes = json_decode($attributes, true);
         }
 
-        if(is_array($attributes) && array_key_exists('driver', $attributes)) {
-            $instance = new CloudStorage($attributes);
+        if (is_array($attributes) && array_key_exists('driver', $attributes)) {
+            $instance = new CustomManagedCloudStorage($attributes);
         } else {
-            $instance = new CloudStorage([
-                'driver' => $driver,
-                'id' => 0
-            ]);
+            $instance = CustomManagedCloudStorage::setup($driver, $this->saveCallback);
         }
-
-        $instance::saving(function(CloudStorage $storage) {
-            if(!$storage->created_at) {
-                $storage->setCreatedAt(Carbon::now());
-            }
-            $storage->setUpdatedAt(Carbon::now());
-            call_user_func_array($this->saveCallback, [$storage->toJson(), $storage->driver]);
-
-            return false;
-        });
 
         return $instance;
     }
@@ -101,6 +102,24 @@ class StorageConnectManager extends Manager
     public function saveUsing($callback)
     {
         $this->saveCallback = $callback;
+    }
+
+    /**
+     * @param $driver
+     *
+     * @return RedirectResponse
+     */
+    public function finish($driver)
+    {
+        $props = (array) $this->app['request']->session()->pull('storage-connect');
+
+        $storage = array_get($props, 'custom') == true
+            ? $this->driver($driver)
+            : CloudStorage::findOrFail(array_get($props, 'id'));
+
+        $this->adapter($driver)->finish($storage);
+
+        return $this->redirectAfterConnect(array_get($props, 'redirect'));
     }
 
     /**
@@ -204,7 +223,7 @@ class StorageConnectManager extends Manager
      *
      * @return mixed
      */
-    protected function createTypes( $type, $driver)
+    protected function createTypes($type, $driver)
     {
         $driver = $driver ?: $this->getDefaultDriver();
 
@@ -223,18 +242,5 @@ class StorageConnectManager extends Manager
         }
 
         return $this->instances[$type][$driver];
-    }
-
-    /**
-     * @param $driver
-     *
-     * @return bool
-     */
-    protected function isSupportedDriver($driver)
-    {
-        return in_array($driver, $this->app['config']['storage-connect.enabled'])
-            && is_array($this->app['config']["services.$driver"])
-            && $this->app['config']["services.$driver.client_id"] != null
-            && $this->app['config']["services.$driver.client_secret"] != null;
     }
 }

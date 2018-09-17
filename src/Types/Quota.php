@@ -57,7 +57,7 @@ class Quota
      */
     public function getAvailable()
     {
-        return $this->total - $this->user;
+        return $this->total - $this->used;
     }
 
     /**

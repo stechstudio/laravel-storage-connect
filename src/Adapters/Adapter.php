@@ -4,7 +4,9 @@ namespace STS\StorageConnect\Adapters;
 use Illuminate\Http\RedirectResponse;
 use STS\StorageConnect\Events\CloudStorageSetup;
 use STS\StorageConnect\Models\CloudStorage;
+use STS\StorageConnect\Models\CustomManagedCloudStorage;
 use STS\StorageConnect\StorageConnectManager;
+use STS\StorageConnect\Types\Quota;
 
 abstract class Adapter
 {
@@ -47,11 +49,13 @@ abstract class Adapter
 
     /**
      * @param $token
-     * @paran $callback
+     * @param null $callback
      *
      * @return $this
+     * @paran $callback
+     *
      */
-    public function setToken($token, $callback)
+    public function setToken($token, $callback = null)
     {
         $this->token = $token;
         $this->tokenUpdateCallback = $callback;
@@ -64,7 +68,9 @@ abstract class Adapter
      */
     protected function updateToken($token)
     {
-        call_user_func($this->tokenUpdateCallback, $token);
+        if($this->tokenUpdateCallback) {
+            call_user_func($this->tokenUpdateCallback, $token);
+        }
     }
 
     /**
@@ -79,7 +85,11 @@ abstract class Adapter
             $storage->save();
         }
 
-        $this->provider()->session()->put('storage-connect.id', $storage->id);
+        if($storage instanceof CustomManagedCloudStorage) {
+            $this->provider()->session()->put('storage-connect.custom', true);
+        } else {
+            $this->provider()->session()->put('storage-connect.id', $storage->id);
+        }
 
         if($redirectUrl != null) {
             $this->provider()->session()->session()->put('storage-connect.redirect', $redirectUrl);
@@ -89,27 +99,25 @@ abstract class Adapter
     }
 
     /**
-     * @return RedirectResponse
+     * @param CloudStorage $storage
+     *
+     * @return void
      */
-    public function finish()
+    public function finish(CloudStorage $storage)
     {
-        $props = $this->provider()->session()->pull('storage-connect');
+        $this->setToken($this->provider()->user()->accessTokenResponseBody);
 
-        /** @var CloudStorage $storage */
-        $storage = CloudStorage::findOrFail($props['id']);
         $storage->update(array_merge(
-            $this->mapUserDetails($this->provider()->user()),
             [
                 'token' => $this->provider()->user()->accessTokenResponseBody,
                 'connected' => 1,
                 'enabled' => 1
-            ]
+            ],
+            $this->mapUserDetails($this->provider()->user())
         ));
-        $storage->checkSpace();
+        $storage->checkSpaceUsage();
 
         event(new CloudStorageSetup($storage));
-
-        return $this->manager->redirectAfterConnect(array_get($props, 'redirect'));
     }
 
     /**
@@ -151,9 +159,20 @@ abstract class Adapter
         return $this->service()->$method(...$parameters);
     }
 
+    /**
+     * @return mixed
+     */
     abstract protected function makeService();
 
+    /**
+     * @return Quota
+     */
     abstract function getQuota();
 
+    /**
+     * @param $user
+     *
+     * @return array
+     */
     abstract protected function mapUserDetails($user);
 }

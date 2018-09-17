@@ -59,8 +59,7 @@ class UploadFile implements ShouldQueue
      */
     public function handle()
     {
-        $this->storage->setJob($this);
-        $this->storage->upload($this->sourcePath, $this->destinationPath, false);
+        $this->storage->upload($this->sourcePath, $this->destinationPath, false, $this);
     }
 
     /**

@@ -18,9 +18,7 @@ class StorageConnectServiceProvider extends ServiceProvider
     public function boot()
     {
         if ($this->app->runningInConsole()) {
-            $this->publishes([
-                __DIR__ . '/../config/storage-connect.php' => config_path('storage-connect.php'),
-            ], 'config');
+            $this->publishes([__DIR__ . '/../config/storage-connect.php' => config_path('storage-connect.php')], 'config');
         }
 
         if ($this->app['config']->get('storage-connect.log_activity') == true) {
@@ -63,42 +61,53 @@ class StorageConnectServiceProvider extends ServiceProvider
         $this->app['events']->listen(CloudStorageSetup::class, function (CloudStorageSetup $event) {
             $this->app['log']->info("New cloud storage connection", [
                 'storage' => $event->storage->id,
-                'owner' => $event->storage->owner_description
+                'driver'  => $event->storage->driver,
+                'owner'   => $event->storage->owner_description
             ]);
         });
 
         $this->app['events']->listen(UploadSucceeded::class, function (UploadSucceeded $event) {
             $this->app['log']->info("File uploaded to cloud storage", [
-                'connection'  => $event->connection->identify(),
                 'source'      => $event->sourcePath,
-                'destination' => $event->destinationPath
+                'destination' => $event->destinationPath,
+                'storage'     => $event->storage->id,
+                'driver'      => $event->storage->driver,
+                'owner'       => $event->storage->owner_description,
             ]);
         });
 
         $this->app['events']->listen(UploadRetrying::class, function (UploadRetrying $event) {
             $this->app['log']->warning($event->message, [
-                'source'     => $event->sourcePath,
-                'connection' => $event->connection->identify()
+                'source'  => $event->sourcePath,
+                'storage' => $event->storage->id,
+                'driver'  => $event->storage->driver,
+                'owner'   => $event->storage->owner_description,
             ]);
         });
 
         $this->app['events']->listen(UploadFailed::class, function (UploadFailed $event) {
             $this->app['log']->error($event->message, [
-                'source'     => $event->sourcePath,
-                'connection' => $event->connection->identify()
+                'source'  => $event->sourcePath,
+                'storage' => $event->storage->id,
+                'driver'  => $event->storage->driver,
+                'owner'   => $event->storage->owner_description,
             ]);
         });
 
         $this->app['events']->listen(CloudStorageDisabled::class, function (CloudStorageDisabled $event) {
             $this->app['log']->warning("Connection disabled: " . $event->message, [
-                'reason'     => $event->reason,
-                'connection' => $event->connection->identify()
+                'reason'  => $event->storage->reason,
+                'storage' => $event->storage->id,
+                'driver'  => $event->storage->driver,
+                'owner'   => $event->storage->owner_description,
             ]);
         });
 
         $this->app['events']->listen(CloudStorageEnabled::class, function (CloudStorageEnabled $event) {
             $this->app['log']->info("Connection enabled", [
-                'connection' => $event->connection->identify()
+                'storage' => $event->storage->id,
+                'driver'  => $event->storage->driver,
+                'owner'   => $event->storage->owner_description,
             ]);
         });
     }

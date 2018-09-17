@@ -34,7 +34,7 @@ class DropboxAdapter extends Adapter
      */
     public function getQuota()
     {
-        $usage = $this->provider->getSpaceUsage();
+        $usage = $this->service()->getSpaceUsage();
 
         return new Quota(array_get($usage, "allocation.allocated", 0), array_get($usage, "used", 0));
     }

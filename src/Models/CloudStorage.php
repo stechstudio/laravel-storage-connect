@@ -53,7 +53,7 @@ class CloudStorage extends Model
      */
     public function adapter()
     {
-        return StorageConnectFacade::adapter($this->driver)->setToken((array)$this->token, function ( $token ) {
+        return StorageConnectFacade::adapter($this->driver)->setToken((array)$this->token, function ($token) {
             $this->update(['token' => $token]);
         });
     }
@@ -73,7 +73,7 @@ class CloudStorage extends Model
      *
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function authorize( $redirectUrl = null )
+    public function authorize($redirectUrl = null)
     {
         return $this->adapter()->authorize($this, $redirectUrl);
     }
@@ -83,7 +83,7 @@ class CloudStorage extends Model
      *
      * @return $this
      */
-    public function disable( $reason = null )
+    public function disable($reason = null)
     {
         $this->enabled = 0;
         $this->reason = $reason;
@@ -93,7 +93,6 @@ class CloudStorage extends Model
         }
 
         $this->save();
-
         event(new CloudStorageDisabled($this));
 
         return $this;
@@ -108,7 +107,6 @@ class CloudStorage extends Model
         $this->enabled = 1;
 
         $this->save();
-
         event(new CloudStorageEnabled($this));
 
         return $this;
@@ -120,7 +118,7 @@ class CloudStorage extends Model
     public function verify()
     {
         if ($this->full && $this->shouldCheckSpace()) {
-            $this->checkSpace();
+            $this->checkSpaceUsage();
         }
 
         return $this->enabled;
@@ -137,7 +135,7 @@ class CloudStorage extends Model
     /**
      * @return $this
      */
-    public function checkSpace()
+    public function checkSpaceUsage()
     {
         $this->update($this->adapter()->getQuota()->toArray());
 
@@ -159,7 +157,7 @@ class CloudStorage extends Model
      * @return bool
      * @throws StorageUnavailableException
      */
-    public function upload( $sourcePath, $destinationPath, $queue = true, $queuedJob = null )
+    public function upload($sourcePath, $destinationPath, $queue = true, $queuedJob = null)
     {
         if (!$this->verify()) {
             throw new StorageUnavailableException($this);
@@ -171,8 +169,8 @@ class CloudStorage extends Model
 
         try {
             return $this->handleUpload($sourcePath, $destinationPath);
-        } catch (UploadException $e) {
-            $this->handleUploadError($e, $queuedJob);
+        } catch (UploadException $exception) {
+            $this->handleUploadError($exception, $queuedJob);
         }
 
         return false;
@@ -184,7 +182,7 @@ class CloudStorage extends Model
      *
      * @return bool
      */
-    protected function handleUpload( $sourcePath, $destinationPath )
+    protected function handleUpload($sourcePath, $destinationPath)
     {
         if (starts_with($sourcePath, "s3://")) {
             app('aws')->createClient('s3')->registerStreamWrapper();
@@ -201,27 +199,27 @@ class CloudStorage extends Model
     }
 
     /**
-     * @param UploadException $e
-     * @param null            $job
+     * @param UploadException $exception
+     * @param null $job
      */
-    protected function handleUploadError( UploadException $e, $job = null )
+    protected function handleUploadError(UploadException $exception, $job = null)
     {
-        $e->setStorage($this);
+        $exception->setStorage($this);
 
-        if ($e->shouldRetry() && $job) {
-            event(new UploadRetrying($this, $e));
+        if ($exception->shouldRetry() && $job) {
+            event(new UploadRetrying($this, $exception, $exception->getSourcePath()));
 
             $job->release();
         }
 
-        if ($e->shouldDisable()) {
-            $this->disable($e->getReason());
+        if ($exception->shouldDisable()) {
+            $this->disable($exception->getReason());
         }
 
         if ($job) {
             $job->delete();
         }
 
-        event(new UploadFailed($this, $e));
+        event(new UploadFailed($this, $exception, $exception->getSourcePath()));
     }
 }

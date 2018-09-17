@@ -15,7 +15,9 @@ StorageConnect::saveUsing(function($storage, $driver) {
 });
 
 StorageConnect::loadUsing(function($driver) {
-    return Storage::get($driver . '_connection.json');
+    return Storage::has($driver . '_connection.json')
+        ? Storage::get($driver . '_connection.json')
+        : null'
 });
 ```
 
