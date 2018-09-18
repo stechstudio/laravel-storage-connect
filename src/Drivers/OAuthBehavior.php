@@ -1,16 +1,12 @@
 <?php
 
-namespace STS\StorageConnect\Traits;
+namespace STS\StorageConnect\Drivers;
 
 use Illuminate\Session\Store;
 use SocialiteProviders\Manager\OAuth2\User;
 use StorageConnect;
 
-/**
- * Class ProvidesOAuth
- * @package STS\StorageConnect\Providers\Traits
- */
-trait ProvidesOAuth
+trait OAuthBehavior
 {
     /**
      * @var User
@@ -27,7 +23,7 @@ trait ProvidesOAuth
      *
      * @param array $config
      */
-    public function __construct( array $config )
+    public function __construct(array $config)
     {
         parent::__construct(
             app('request'), $config['client_id'],
@@ -39,7 +35,7 @@ trait ProvidesOAuth
     /**
      * @return string
      */
-    protected function callbackUrl( $config, $request )
+    protected function callbackUrl($config, $request)
     {
         return sprintf("https://%s/%s/callback/%s",
             array_get($config, 'callback_domain') ?: config('storage-connect.callback_domain') ?: $request->getHost(),

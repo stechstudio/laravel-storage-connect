@@ -3,7 +3,7 @@
 namespace STS\StorageConnect\Drivers\Google;
 
 use SocialiteProviders\Google\Provider as BaseProvider;
-use STS\StorageConnect\Traits\ProvidesOAuth;
+use STS\StorageConnect\Drivers\OAuthBehavior;
 
 /**
  * Class GoogleProvider
@@ -11,7 +11,7 @@ use STS\StorageConnect\Traits\ProvidesOAuth;
  */
 class Provider extends BaseProvider
 {
-    use ProvidesOAuth;
+    use OAuthBehavior;
 
     /**
      * @var array

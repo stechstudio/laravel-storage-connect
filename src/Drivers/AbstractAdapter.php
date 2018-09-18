@@ -1,4 +1,5 @@
 <?php
+
 namespace STS\StorageConnect\Drivers;
 
 use Illuminate\Http\RedirectResponse;
@@ -66,7 +67,7 @@ abstract class AbstractAdapter
      */
     protected function updateToken($token)
     {
-        if($this->tokenUpdateCallback) {
+        if ($this->tokenUpdateCallback) {
             call_user_func($this->tokenUpdateCallback, $token);
         }
     }
@@ -79,17 +80,17 @@ abstract class AbstractAdapter
      */
     public function authorize(CloudStorage $storage, $redirectUrl = null)
     {
-        if(!$storage->exists) {
+        if (!$storage->exists) {
             $storage->save();
         }
 
-        if($storage instanceof CustomManagedCloudStorage) {
+        if ($storage instanceof CustomManagedCloudStorage) {
             $this->provider()->session()->put('storage-connect.custom', true);
         } else {
             $this->provider()->session()->put('storage-connect.id', $storage->id);
         }
 
-        if($redirectUrl != null) {
+        if ($redirectUrl != null) {
             $this->provider()->session()->put('storage-connect.redirect', $redirectUrl);
         }
 
@@ -107,9 +108,9 @@ abstract class AbstractAdapter
 
         $storage->update(array_merge(
             [
-                'token' => $this->provider()->user()->accessTokenResponseBody,
+                'token'     => $this->provider()->user()->accessTokenResponseBody,
                 'connected' => 1,
-                'enabled' => 1
+                'enabled'   => 1
             ],
             $this->mapUserDetails($this->provider()->user())
         ));
@@ -131,7 +132,7 @@ abstract class AbstractAdapter
      */
     public function provider()
     {
-        if(!$this->provider) {
+        if (!$this->provider) {
             $this->setProvider($this->makeProvider());
         }
 
@@ -148,7 +149,7 @@ abstract class AbstractAdapter
      */
     public function service()
     {
-        if(!$this->service) {
+        if (!$this->service) {
             $this->setService($this->makeService());
         }
 

@@ -66,33 +66,33 @@ class Adapter extends AbstractAdapter
 
     /**
      * @param DropboxClientException $dropbox
-     * @param UploadException        $upload
+     * @param UploadException $upload
      *
      * @return UploadException
      */
-    protected function handleException( DropboxClientException $dropbox, UploadException $upload)
+    protected function handleException(DropboxClientException $dropbox, UploadException $upload)
     {
         // First check for connection failure
-        if(str_contains($dropbox->getMessage(), "Connection timed out")) {
+        if (str_contains($dropbox->getMessage(), "Connection timed out")) {
             return $upload->retry("Connection timeout");
         }
 
         // See if we have a parseable error
         $error = json_decode($dropbox->getMessage(), true);
 
-        if(!is_array($error)) {
+        if (!is_array($error)) {
             return $upload->retry("Unknown error uploading file to Dropbox: " . $dropbox->getMessage());
         }
 
-        if(str_contains(array_get($error, 'error_summary'), "insufficient_space")) {
+        if (str_contains(array_get($error, 'error_summary'), "insufficient_space")) {
             return $upload->disable("Dropbox account is full", CloudStorage::SPACE_FULL);
         }
 
-        if(str_contains(array_get($error, 'error_summary'), "invalid_access_token")) {
+        if (str_contains(array_get($error, 'error_summary'), "invalid_access_token")) {
             return $upload->disable("Dropbox integration is invalid", CloudStorage::INVALID_TOKEN);
         }
 
-        if(str_contains(array_get($error, 'error_summary'), 'too_many_write_operations')) {
+        if (str_contains(array_get($error, 'error_summary'), 'too_many_write_operations')) {
             return $upload->retry("Hit rate limit");
         }
 

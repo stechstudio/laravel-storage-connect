@@ -3,9 +3,9 @@
 namespace STS\StorageConnect\Drivers\Dropbox;
 
 use SocialiteProviders\Dropbox\Provider as BaseProvider;
-use STS\StorageConnect\Traits\ProvidesOAuth;
+use STS\StorageConnect\Drivers\OAuthBehavior;
 
 class Provider extends BaseProvider
 {
-    use ProvidesOAuth;
+    use OAuthBehavior;
 }
