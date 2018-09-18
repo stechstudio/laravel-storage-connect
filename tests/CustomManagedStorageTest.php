@@ -1,6 +1,7 @@
 <?php
 namespace STS\StorageConnect\Tests;
 
+use Illuminate\Http\RedirectResponse;
 use StorageConnect;
 use STS\StorageConnect\Models\CustomManagedCloudStorage;
 
@@ -61,5 +62,31 @@ class CustomManagedStorageTest extends TestCase
 
         // This will load our custom managed default driver
         $this->assertFalse(StorageConnect::isEnabled());
+    }
+
+    public function testAuthorize()
+    {
+        StorageConnect::loadUsing(function () {});
+        StorageConnect::saveUsing(function () {});
+
+        $this->setupDropbox();
+
+        $response = StorageConnect::authorize();
+
+        $this->assertInstanceOf(RedirectResponse::class, $response);
+        $this->assertTrue(session('storage-connect.custom'));
+    }
+
+    public function testOwner()
+    {
+        StorageConnect::loadUsing(function () {
+            return [
+                'driver' => 'dropbox',
+                'name' => "Someone",
+                'email' => 'someone@somewhere.com'
+            ];
+        });
+
+        $this->assertEquals('someone@somewhere.com', StorageConnect::getAttribute('owner_description'));
     }
 }

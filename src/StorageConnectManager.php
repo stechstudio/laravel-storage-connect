@@ -46,13 +46,11 @@ class StorageConnectManager extends Manager
     /**
      * @param $name
      * @param $adapter
-     * @param $provider
      */
-    public function register($name, $adapter, $provider)
+    public function register($name, $adapter)
     {
         $this->registered[$name] = [
-            'adapter' => $adapter,
-            'provider' => $provider,
+            'adapter' => $adapter
         ];
     }
 
@@ -63,21 +61,12 @@ class StorageConnectManager extends Manager
      */
     public function adapter($driver)
     {
+        if(!isset($this->registered[$driver])) {
+            dd($driver);
+        }
         $class = $this->registered[$driver]['adapter'];
 
-        return new $class($this->app['config']["services.$driver"], $this->provider($driver));
-    }
-
-    /**
-     * @param $driver
-     *
-     * @return AbstractProvider
-     */
-    public function provider($driver)
-    {
-        $class = $this->registered[$driver]['provider'];
-
-        return new $class($this->app['config']["services.$driver"], $this->app['request'], $this->getState());
+        return new $class($this->app['config']["services.$driver"]);
     }
 
     /**
@@ -196,8 +185,7 @@ class StorageConnectManager extends Manager
             ? $this->driver($driver)
             : CloudStorage::findOrFail(array_get($props, 'id'));
 
-
-        $this->app["sts.storage-connect.adapter-$driver"]->finish($storage);
+        $this->adapter($driver)->finish($storage);
 
         return $this->redirectAfterConnect(array_get($props, 'redirect'));
     }

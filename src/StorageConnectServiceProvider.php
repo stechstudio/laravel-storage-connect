@@ -32,17 +32,8 @@ class StorageConnectServiceProvider extends ServiceProvider
             $this->app['events']->subscribe(LogsActivity::class);
         }
 
-        $this->app['sts.storage-connect']->register(
-            'dropbox',
-            \STS\StorageConnect\Drivers\Dropbox\Adapter::class,
-            \STS\StorageConnect\Drivers\Dropbox\Provider::class
-        );
-
-        $this->app['sts.storage-connect']->register(
-            'google',
-            \STS\StorageConnect\Drivers\Google\Adapter::class,
-            \STS\StorageConnect\Drivers\Google\Provider::class
-        );
+        $this->app['sts.storage-connect']->register('dropbox', \STS\StorageConnect\Drivers\Dropbox\Adapter::class);
+        $this->app['sts.storage-connect']->register('google', \STS\StorageConnect\Drivers\Google\Adapter::class);
     }
 
     /**

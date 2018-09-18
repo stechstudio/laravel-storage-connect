@@ -2,9 +2,9 @@
 
 namespace STS\StorageConnect\Traits;
 
-use Illuminate\Http\Request;
 use Illuminate\Session\Store;
 use SocialiteProviders\Manager\OAuth2\User;
+use StorageConnect;
 
 /**
  * Class ProvidesOAuth
@@ -12,11 +12,6 @@ use SocialiteProviders\Manager\OAuth2\User;
  */
 trait ProvidesOAuth
 {
-    /**
-     * @var array
-     */
-    protected $state;
-
     /**
      * @var User
      */
@@ -31,16 +26,12 @@ trait ProvidesOAuth
      * EnhancedProvider constructor.
      *
      * @param array $config
-     * @param       $request
-     * @param       $state
      */
-    public function __construct( array $config, $request, $state )
+    public function __construct( array $config )
     {
-        $this->state = (array)$state;
-
         parent::__construct(
-            $request, $config['client_id'],
-            $config['client_secret'], $this->callbackUrl($config, $request),
+            app('request'), $config['client_id'],
+            $config['client_secret'], $this->callbackUrl($config, app('request')),
             array_get($config, 'guzzle', [])
         );
     }
@@ -72,7 +63,7 @@ trait ProvidesOAuth
     {
         return base64_encode(json_encode(array_merge(
             ['csrf' => str_random(40)],
-            $this->state
+            StorageConnect::getState()
         )));
     }
 

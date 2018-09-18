@@ -100,6 +100,14 @@ class Adapter extends AbstractAdapter
     }
 
     /**
+     * @return \SocialiteProviders\Manager\OAuth2\AbstractProvider
+     */
+    protected function makeProvider()
+    {
+        return new Provider($this->config);
+    }
+
+    /**
      * @return Dropbox
      */
     protected function makeService()

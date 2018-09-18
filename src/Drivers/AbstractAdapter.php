@@ -21,7 +21,7 @@ abstract class AbstractAdapter
     protected $provider;
 
     /**
-     * @var AbstractService
+     * @var mixed
      */
     protected $service;
 
@@ -39,12 +39,10 @@ abstract class AbstractAdapter
      * DropboxAdapter constructor.
      *
      * @param array $config
-     * @param AbstractProvider $provider
      */
-    public function __construct(array $config, AbstractProvider $provider)
+    public function __construct(array $config)
     {
         $this->config = $config;
-        $this->provider = $provider;
     }
 
     /**
@@ -115,7 +113,7 @@ abstract class AbstractAdapter
             ],
             $this->mapUserDetails($this->provider()->user())
         ));
-        $storage->checkSpaceUsage();
+        $storage->updateQuota($this->getQuota());
 
         event(new CloudStorageSetup($storage));
     }
@@ -131,9 +129,18 @@ abstract class AbstractAdapter
     /**
      * @return AbstractProvider
      */
-    protected function provider()
+    public function provider()
     {
+        if(!$this->provider) {
+            $this->setProvider($this->makeProvider());
+        }
+
         return $this->provider;
+    }
+
+    public function setProvider(AbstractProvider $provider)
+    {
+        $this->provider = $provider;
     }
 
     /**
@@ -141,6 +148,10 @@ abstract class AbstractAdapter
      */
     public function service()
     {
+        if(!$this->service) {
+            $this->setService($this->makeService());
+        }
+
         return $this->service;
     }
 
@@ -162,6 +173,11 @@ abstract class AbstractAdapter
     {
         return $this->service()->$method(...$parameters);
     }
+
+    /**
+     * @return AbstractProvider
+     */
+    abstract protected function makeProvider();
 
     /**
      * @return mixed

@@ -14,6 +14,7 @@ use STS\StorageConnect\Events\UploadSucceeded;
 use STS\StorageConnect\Exceptions\StorageUnavailableException;
 use STS\StorageConnect\Exceptions\UploadException;
 use STS\StorageConnect\Jobs\UploadFile;
+use STS\StorageConnect\Types\Quota;
 
 /**
  * Class CloudStorage
@@ -202,7 +203,17 @@ class CloudStorage extends Model
      */
     public function checkSpaceUsage()
     {
-        $this->update($this->adapter()->getQuota()->toArray());
+        return $this->updateQuota($this->adapter()->getQuota());
+    }
+
+    /**
+     * @param Quota $quota
+     *
+     * @return $this
+     */
+    public function updateQuota(Quota $quota)
+    {
+        $this->update($quota->toArray());
 
         if ($this->full && $this->percent_full < 99) {
             $this->enable();

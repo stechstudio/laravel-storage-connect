@@ -15,7 +15,7 @@ class Adapter extends AbstractAdapter
     /**
      * @var string
      */
-    protected $name = "google";
+    protected $driver = "google";
 
     /**
      * @param $user
@@ -41,6 +41,14 @@ class Adapter extends AbstractAdapter
     }
 
     /**
+     * @return \SocialiteProviders\Manager\OAuth2\AbstractProvider
+     */
+    protected function makeProvider()
+    {
+        return new Provider($this->config);
+    }
+
+    /**
      * @return Google_Service_Drive
      */
     protected function makeService()
@@ -51,7 +59,7 @@ class Adapter extends AbstractAdapter
         ]);
 
         $client->setApplicationName(
-            $this->app['config']->get('storage-connect.app_name', $this->app['config']->get('app.name'))
+            config('storage-connect.app_name', config('app.name'))
         );
 
         $client->setAccessToken($this->token);

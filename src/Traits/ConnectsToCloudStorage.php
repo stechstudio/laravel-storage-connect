@@ -29,7 +29,7 @@ trait ConnectsToCloudStorage
     public function google()
     {
         return $this->morphOne(CloudStorage::class, 'owner')->whereDriver('google')->withDefault([
-            'drive' => 'google',
+            'driver' => 'google',
         ]);
     }
 

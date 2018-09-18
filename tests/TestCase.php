@@ -4,6 +4,7 @@ namespace STS\StorageConnect\Tests;
 use Orchestra\Testbench\TestCase as Orchestra;
 use STS\StorageConnect\StorageConnectFacade;
 use STS\StorageConnect\StorageConnectServiceProvider;
+use Mockery;
 
 abstract class TestCase extends Orchestra
 {
@@ -19,6 +20,8 @@ abstract class TestCase extends Orchestra
 
         $factory = app(\Illuminate\Database\Eloquent\Factory::class);
         require(__DIR__ . "/ModelFactory.php");
+
+        Mockery::globalHelpers();
     }
 
     /**
@@ -72,6 +75,14 @@ abstract class TestCase extends Orchestra
         config([
             'services.dropbox.client_id' => 'foo',
             'services.dropbox.client_secret' => 'bar'
+        ]);
+    }
+
+    protected function setupGoogle()
+    {
+        config([
+            'services.google.client_id' => 'foo',
+            'services.google.client_secret' => 'bar'
         ]);
     }
 }
