@@ -1,14 +1,14 @@
 <?php
-namespace STS\StorageConnect\Adapters;
+namespace STS\StorageConnect\Drivers;
 
 use Illuminate\Http\RedirectResponse;
+use SocialiteProviders\Manager\OAuth2\AbstractProvider;
 use STS\StorageConnect\Events\CloudStorageSetup;
 use STS\StorageConnect\Models\CloudStorage;
 use STS\StorageConnect\Models\CustomManagedCloudStorage;
-use STS\StorageConnect\StorageConnectManager;
 use STS\StorageConnect\Types\Quota;
 
-abstract class Adapter
+abstract class AbstractAdapter
 {
     /**
      * @var
@@ -16,12 +16,12 @@ abstract class Adapter
     protected $config;
 
     /**
-     * @var StorageConnectManager
+     * @var AbstractProvider
      */
-    protected $manager;
+    protected $provider;
 
     /**
-     * @var mixed
+     * @var AbstractService
      */
     protected $service;
 
@@ -38,13 +38,13 @@ abstract class Adapter
     /**
      * DropboxAdapter constructor.
      *
-     * @param array                 $config
-     * @param StorageConnectManager $manager
+     * @param array $config
+     * @param AbstractProvider $provider
      */
-    public function __construct(array $config, StorageConnectManager $manager)
+    public function __construct(array $config, AbstractProvider $provider)
     {
         $this->config = $config;
-        $this->manager = $manager;
+        $this->provider = $provider;
     }
 
     /**
@@ -81,8 +81,6 @@ abstract class Adapter
      */
     public function authorize(CloudStorage $storage, $redirectUrl = null)
     {
-        $this->manager->verifyDriver($storage->driver);
-
         if(!$storage->exists) {
             $storage->save();
         }
@@ -131,11 +129,11 @@ abstract class Adapter
     }
 
     /**
-     * @return mixed
+     * @return AbstractProvider
      */
     protected function provider()
     {
-        return $this->manager->provider($this->driver());
+        return $this->provider;
     }
 
     /**
@@ -143,11 +141,15 @@ abstract class Adapter
      */
     public function service()
     {
-        if (!$this->service) {
-            $this->service = $this->makeService();
-        }
-
         return $this->service;
+    }
+
+    /**
+     * @param $service
+     */
+    public function setService($service)
+    {
+        $this->service = $service;
     }
 
     /**
@@ -177,4 +179,12 @@ abstract class Adapter
      * @return array
      */
     abstract protected function mapUserDetails($user);
+
+    /**
+     * @param $sourcePath
+     * @param $destinationPath
+     *
+     * @return mixed
+     */
+    abstract function upload($sourcePath, $destinationPath);
 }

@@ -2,17 +2,14 @@
 
 namespace STS\StorageConnect;
 
-use Carbon\Carbon;
 use Illuminate\Support\Manager;
 use Illuminate\Support\Str;
 use Illuminate\Http\RedirectResponse;
 use InvalidArgumentException;
-use STS\StorageConnect\Adapters\DropboxAdapter;
-use STS\StorageConnect\Adapters\GoogleAdapter;
+use Laravel\Socialite\Two\AbstractProvider;
+use STS\StorageConnect\Drivers\AbstractAdapter;
 use STS\StorageConnect\Models\CloudStorage;
 use STS\StorageConnect\Models\CustomManagedCloudStorage;
-use STS\StorageConnect\Providers\DropboxProvider;
-use STS\StorageConnect\Providers\GoogleProvider;
 use UnexpectedValueException;
 
 /**
@@ -24,7 +21,7 @@ class StorageConnectManager extends Manager
     /**
      * @var array
      */
-    protected $includeState = [];
+    protected $state = [];
 
     /**
      * @var callable
@@ -37,14 +34,51 @@ class StorageConnectManager extends Manager
     protected $loadCallback;
 
     /**
-     * @var array
-     */
-    protected $instances = [];
-
-    /**
      * @var string
      */
     public static $appName = null;
+
+    /**
+     * @var array
+     */
+    protected $registered = [];
+
+    /**
+     * @param $name
+     * @param $adapter
+     * @param $provider
+     */
+    public function register($name, $adapter, $provider)
+    {
+        $this->registered[$name] = [
+            'adapter' => $adapter,
+            'provider' => $provider,
+        ];
+    }
+
+    /**
+     * @param $driver
+     *
+     * @return AbstractAdapter
+     */
+    public function adapter($driver)
+    {
+        $class = $this->registered[$driver]['adapter'];
+
+        return new $class($this->app['config']["services.$driver"], $this->provider($driver));
+    }
+
+    /**
+     * @param $driver
+     *
+     * @return AbstractProvider
+     */
+    public function provider($driver)
+    {
+        $class = $this->registered[$driver]['provider'];
+
+        return new $class($this->app['config']["services.$driver"], $this->app['request'], $this->getState());
+    }
 
     /**
      * @return string
@@ -138,7 +172,15 @@ class StorageConnectManager extends Manager
      */
     public function includeState(array $state)
     {
-        $this->includeState = array_merge($this->includeState, $state);
+        $this->state = array_merge($this->state, $state);
+    }
+
+    /**
+     * @return array
+     */
+    public function getState()
+    {
+        return $this->state;
     }
 
     /**
@@ -154,7 +196,8 @@ class StorageConnectManager extends Manager
             ? $this->driver($driver)
             : CloudStorage::findOrFail(array_get($props, 'id'));
 
-        $this->adapter($driver)->finish($storage);
+
+        $this->app["sts.storage-connect.adapter-$driver"]->finish($storage);
 
         return $this->redirectAfterConnect(array_get($props, 'redirect'));
     }
@@ -174,58 +217,6 @@ class StorageConnectManager extends Manager
     }
 
     /**
-     * @param null $driver
-     *
-     * @return mixed
-     */
-    public function adapter($driver = null)
-    {
-        return $this->createTypes('adapter', $driver);
-    }
-
-    /**
-     * @return DropboxAdapter
-     */
-    protected function createDropboxAdapter()
-    {
-        return new DropboxAdapter($this->app['config']['services.dropbox'], $this);
-    }
-
-    /**
-     * @return GoogleAdapter
-     */
-    protected function createGoogleAdapter()
-    {
-        return new GoogleAdapter($this->app['config']['services.google'], $this);
-    }
-
-    /**
-     * @param null $driver
-     *
-     * @return mixed
-     */
-    public function provider($driver = null)
-    {
-        return $this->createTypes('provider', $driver);
-    }
-
-    /**
-     * @return DropboxProvider
-     */
-    protected function createDropboxProvider()
-    {
-        return new DropboxProvider($this->app['config']['services.dropbox'], $this->app['request'], $this->includeState);
-    }
-
-    /**
-     * @return GoogleProvider
-     */
-    public function createGoogleProvider()
-    {
-        return new GoogleProvider($this->app['config']['services.google'], $this->app['request'], $this->includeState);
-    }
-
-    /**
      * @return string
      */
     public function appName()
@@ -242,14 +233,6 @@ class StorageConnectManager extends Manager
     }
 
     /**
-     * @return CloudStorage
-     */
-    public function instance()
-    {
-        return $this->driver();
-    }
-
-    /**
      * Dynamically call the default connection instance.
      *
      * @param  string $method
@@ -260,32 +243,5 @@ class StorageConnectManager extends Manager
     public function __call($method, $parameters)
     {
         return $this->driver()->$method(...$parameters);
-    }
-
-    /**
-     * @param $type
-     * @param $driver
-     *
-     * @return mixed
-     */
-    protected function createTypes($type, $driver)
-    {
-        $driver = $driver ?: $this->getDefaultDriver();
-
-        if (!$this->isSupportedDriver($driver)) {
-            throw new InvalidArgumentException("Driver [$driver] not supported.");
-        }
-
-        if (!isset($this->instances[$type][$driver])) {
-            $method = 'create' . Str::studly($driver) . Str::studly($type);
-
-            if (method_exists($this, $method)) {
-                $this->instances[$type][$driver] = $this->$method();
-            } else {
-                throw new InvalidArgumentException(Str::studly($type) . " [$driver] not supported.");
-            }
-        }
-
-        return $this->instances[$type][$driver];
     }
 }

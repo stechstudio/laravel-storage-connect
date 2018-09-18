@@ -1,15 +1,16 @@
 <?php
 
-namespace STS\StorageConnect\Adapters;
+namespace STS\StorageConnect\Drivers\Dropbox;
 
 use Kunnu\Dropbox\Dropbox;
 use Kunnu\Dropbox\DropboxApp;
 use Kunnu\Dropbox\Exceptions\DropboxClientException;
+use STS\StorageConnect\Drivers\AbstractAdapter;
 use STS\StorageConnect\Exceptions\UploadException;
 use STS\StorageConnect\Models\CloudStorage;
 use STS\StorageConnect\Types\Quota;
 
-class DropboxAdapter extends Adapter
+class Adapter extends AbstractAdapter
 {
     /**
      * @var string

@@ -32,4 +32,34 @@ class CustomManagedStorageTest extends TestCase
         $this->assertEquals("foo", StorageConnect::driver()->driver);
         $this->assertTrue(StorageConnect::driver()->exists);
     }
+
+    public function testSave()
+    {
+        $saved = json_encode(["id" => 5, "driver" => "foo"]);
+
+        StorageConnect::loadUsing(function() use(&$saved) {
+            return $saved;
+        });
+
+        StorageConnect::saveUsing(function($storage) use(&$saved) {
+            $saved = $storage;
+        });
+
+        $this->assertEquals("foo", StorageConnect::driver()->driver);
+
+        StorageConnect::driver()->id = 10;
+        StorageConnect::driver()->save();
+
+        $this->assertEquals(10, json_decode($saved, true)['id']);
+    }
+
+    public function testPassthrough()
+    {
+        StorageConnect::loadUsing(function () {
+            return null;
+        });
+
+        // This will load our custom managed default driver
+        $this->assertFalse(StorageConnect::isEnabled());
+    }
 }

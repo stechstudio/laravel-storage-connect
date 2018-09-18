@@ -3,11 +3,9 @@
 namespace STS\StorageConnect\Models;
 
 use Carbon\Carbon;
-use Exception;
+use StorageConnect;
 use Illuminate\Database\Eloquent\Model;
-use STS\Backoff\Backoff;
-use STS\Backoff\Strategies\PolynomialStrategy;
-use STS\StorageConnect\Adapters\Adapter;
+use STS\StorageConnect\Drivers\AbstractAdapter;
 use STS\StorageConnect\Events\CloudStorageDisabled;
 use STS\StorageConnect\Events\CloudStorageEnabled;
 use STS\StorageConnect\Events\UploadFailed;
@@ -16,8 +14,6 @@ use STS\StorageConnect\Events\UploadSucceeded;
 use STS\StorageConnect\Exceptions\StorageUnavailableException;
 use STS\StorageConnect\Exceptions\UploadException;
 use STS\StorageConnect\Jobs\UploadFile;
-use STS\StorageConnect\StorageConnectFacade;
-use STS\StorageConnect\Types\Quota;
 
 /**
  * Class CloudStorage
@@ -43,11 +39,16 @@ class CloudStorage extends Model
      * @var array
      */
     protected $casts = [
-        'token' => 'array',
+        'token'     => 'array',
         'connected' => 'boolean',
-        'enabled' => 'boolean',
-        'full' => 'boolean'
+        'enabled'   => 'boolean',
+        'full'      => 'boolean'
     ];
+
+    /**
+     * @var
+     */
+    protected $adapter;
 
     /**
      * @return \Illuminate\Database\Eloquent\Relations\MorphTo
@@ -213,13 +214,17 @@ class CloudStorage extends Model
     }
 
     /**
-     * @return Adapter
+     * @return AbstractAdapter
      */
     public function adapter()
     {
-        return StorageConnectFacade::adapter($this->driver)->setToken((array)$this->token, function ($token) {
-            $this->update(['token' => $token]);
-        });
+        if (!$this->adapter) {
+            $this->adapter = StorageConnect::adapter($this->driver)->setToken((array)$this->token, function ($token) {
+                $this->update(['token' => $token]);
+            });
+        }
+
+        return $this->adapter;
     }
 
     /**
@@ -299,5 +304,12 @@ class CloudStorage extends Model
         }
 
         event(new UploadFailed($this, $exception, $exception->getSourcePath()));
+    }
+
+    public function __sleep()
+    {
+        $this->adapter = null;
+
+        return array_keys(get_object_vars($this));
     }
 }

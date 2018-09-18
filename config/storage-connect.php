@@ -8,6 +8,13 @@ return [
     'app_name' => env('STORAGE_CONNECT_APP_NAME'),
 
     /**
+     * By default your current domain is used for the callback. However if your app runs on multiple
+     * domains/aliases, you may need to explicitly set here the domain you have pre-registered
+     * in your Dropbox/Google app.
+     */
+    'callback_domain' => env('STORAGE_CONNECT_CALLBACK_DOMAIN'),
+
+    /**
      * By default we don't log anything directly, we just fire off events. If you'd like us to
      * log just turn this on.
      */

@@ -51,11 +51,7 @@ trait ProvidesOAuth
     protected function callbackUrl( $config, $request )
     {
         return sprintf("https://%s/%s/callback/%s",
-            array_get($config, 'callback_domain',
-                array_get(config('storage-connect'), 'callback_domain',
-                    $request->getHost()
-                )
-            ),
+            array_get($config, 'callback_domain') ?: config('storage-connect.callback_domain') ?: $request->getHost(),
             config('storage-connect.path'),
             $this->name()
         );

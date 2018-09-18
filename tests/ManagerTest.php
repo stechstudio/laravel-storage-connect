@@ -12,14 +12,14 @@ class ManagerTest extends TestCase
         $this->assertEquals('google', StorageConnect::getDefaultDriver());
     }
 
-    public function testInvalidDriver()
+    public function testVerifyInvalidDriver()
     {
         // Without setting up first, this is not a valid driver
         $this->expectException(\InvalidArgumentException::class);
         StorageConnect::verifyDriver("dropbox");
     }
 
-    public function testValidDriver()
+    public function testVerifyValidDriver()
     {
         // This setups up the services config
         $this->setupDropbox();
@@ -33,5 +33,5 @@ class ManagerTest extends TestCase
         StorageConnect::verifyDriver("dropbox");
     }
 
-
+    
 }

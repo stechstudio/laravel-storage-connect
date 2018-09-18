@@ -1,45 +1,67 @@
 <?php
 
-namespace STS\StorageConnect\Providers;
+namespace STS\StorageConnect\Drivers\Google;
 
 use Google_Client;
 use Google_Http_MediaFileUpload;
 use Google_Service_Drive;
 use Google_Service_Drive_DriveFile;
-use SocialiteProviders\Google\Provider;
-use SocialiteProviders\Manager\OAuth2\User;
-use STS\StorageConnect\Connections\GoogleConnection;
-use STS\StorageConnect\Traits\ProvidesOAuth;
-use Log;
+use STS\StorageConnect\Drivers\AbstractAdapter;
+use STS\StorageConnect\Types\Quota;
+use StorageConnect;
 
-/**
- * Class GoogleProvider
- * @package STS\StorageConnect\Providers
- */
-class GoogleProvider extends Provider implements ProviderContract
+class Adapter extends AbstractAdapter
 {
-    use ProvidesOAuth;
+    /**
+     * @var string
+     */
+    protected $name = "google";
 
     /**
-     * @var array
+     * @param $user
+     *
+     * @return array
      */
-    protected $scopes = [
-        'profile', 'email', 'openid',
-        'https://www.googleapis.com/auth/drive.file'
-    ];
+    protected function mapUserDetails($user)
+    {
+        return [
+            'name'  => $user->name,
+            'email' => $user->email,
+        ];
+    }
 
     /**
-     * @var array
+     * @return Quota
      */
-    protected $parameters = [
-        'access_type' => 'offline',
-        'prompt'      => 'consent'
-    ];
+    public function getQuota()
+    {
+        $about = $this->service()->about->get();
+
+        return new Quota($about->getQuotaBytesTotal(), $about->getQuotaBytesUsed());
+    }
 
     /**
-     * @var Google_Service_Drive
+     * @return Google_Service_Drive
      */
-    protected $service;
+    protected function makeService()
+    {
+        $client = new Google_Client([
+            'client_id'     => $this->config['client_id'],
+            'client_secret' => $this->config['client_secret']
+        ]);
+
+        $client->setApplicationName(
+            $this->app['config']->get('storage-connect.app_name', $this->app['config']->get('app.name'))
+        );
+
+        $client->setAccessToken($this->token);
+
+        if ($client->isAccessTokenExpired()) {
+            $this->updateToken($client->refreshToken($client->getRefreshToken()));
+        }
+
+        return new Google_Service_Drive($client);
+    }
 
     /**
      * @param $sourcePath
@@ -50,7 +72,7 @@ class GoogleProvider extends Provider implements ProviderContract
     public function upload( $sourcePath, $destinationPath )
     {
         $file = $this->prepareFile($destinationPath);
-        list($filesize, $mimeType) = $this->stats($sourcePath);
+        list($filesize, $mimeType) = $this->stat($sourcePath);
 
         if ($filesize >= 5 * 1024 * 1024) {
             return $this->uploadChunked($sourcePath, $file, $filesize);
@@ -70,7 +92,7 @@ class GoogleProvider extends Provider implements ProviderContract
      */
     protected function prepareFile( $destinationPath )
     {
-        $folderId = $this->getFolderIdForPath($this->manager->appName() . "/" . dirname($destinationPath));
+        $folderId = $this->getFolderIdForPath(StorageConnect::appName() . "/" . dirname($destinationPath));
 
         return new Google_Service_Drive_DriveFile([
             'name'    => basename($destinationPath),
@@ -166,7 +188,7 @@ class GoogleProvider extends Provider implements ProviderContract
         }
 
         return count($folders)
-            ? $this->prepareFolders($folders, $folder->id)
+            ? $this->prepareFolderTree($folders, $folder->id)
             : $folder->id;
     }
 

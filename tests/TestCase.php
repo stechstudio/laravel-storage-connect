@@ -60,6 +60,8 @@ abstract class TestCase extends Orchestra
             'database' => ':memory:',
             'prefix'   => '',
         ]);
+
+        $app['request']->setLaravelSession($app['session']->driver('array'));
     }
 
     /**
@@ -67,9 +69,9 @@ abstract class TestCase extends Orchestra
      */
     protected function setupDropbox()
     {
-        config(['services.dropbox' => [
-            'client_id' => 'foo',
-            'client_secret' => 'bar'
-        ]]);
+        config([
+            'services.dropbox.client_id' => 'foo',
+            'services.dropbox.client_secret' => 'bar'
+        ]);
     }
 }
