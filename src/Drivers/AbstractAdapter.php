@@ -12,7 +12,17 @@ use STS\StorageConnect\Types\Quota;
 abstract class AbstractAdapter
 {
     /**
-     * @var
+     * @var string
+     */
+    protected $driver;
+
+    /**
+     * @var string
+     */
+    protected $providerClass;
+
+    /**
+     * @var array
      */
     protected $config;
 
@@ -158,16 +168,22 @@ abstract class AbstractAdapter
 
     /**
      * @param $service
+     *
+     * @return AbstractAdapter
      */
     public function setService($service)
     {
         $this->service = $service;
+
+        return $this;
     }
 
     /**
      * @return AbstractProvider
      */
-    abstract protected function makeProvider();
+    protected function makeProvider() {
+        return app($this->providerClass);
+    }
 
     /**
      * @return mixed

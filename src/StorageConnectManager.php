@@ -44,29 +44,15 @@ class StorageConnectManager extends Manager
     protected $registered = [];
 
     /**
-     * @param $name
-     * @param $adapter
-     */
-    public function register($name, $adapter)
-    {
-        $this->registered[$name] = [
-            'adapter' => $adapter
-        ];
-    }
-
-    /**
      * @param $driver
      *
      * @return AbstractAdapter
      */
     public function adapter($driver)
     {
-        if(!isset($this->registered[$driver])) {
-            dd($driver);
-        }
-        $class = $this->registered[$driver]['adapter'];
+        $this->verifyDriver($driver);
 
-        return new $class($this->app['config']["services.$driver"]);
+        return $this->app->make("sts.storage-connect.adapter.$driver");
     }
 
     /**
@@ -111,6 +97,8 @@ class StorageConnectManager extends Manager
      */
     protected function createDriver($driver)
     {
+        $this->verifyDriver($driver);
+
         $attributes = $this->load($driver);
 
         if (!is_array($attributes)) {

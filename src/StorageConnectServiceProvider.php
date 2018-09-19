@@ -31,9 +31,8 @@ class StorageConnectServiceProvider extends ServiceProvider
         if ($this->app['config']->get('storage-connect.log_activity') == true) {
             $this->app['events']->subscribe(LogsActivity::class);
         }
-
-        $this->app['sts.storage-connect']->register('dropbox', \STS\StorageConnect\Drivers\Dropbox\Adapter::class);
-        $this->app['sts.storage-connect']->register('google', \STS\StorageConnect\Drivers\Google\Adapter::class);
+        $this->registerDriver('dropbox', \STS\StorageConnect\Drivers\Dropbox\Adapter::class, \STS\StorageConnect\Drivers\Dropbox\Provider::class);
+        $this->registerDriver('google', \STS\StorageConnect\Drivers\Google\Adapter::class, \STS\StorageConnect\Drivers\Google\Provider::class);
     }
 
     /**
@@ -61,5 +60,22 @@ class StorageConnectServiceProvider extends ServiceProvider
     public function provides()
     {
         return $this->provides;
+    }
+
+    protected function registerDriver($name, $abstractClass, $providerClass)
+    {
+        $this->app->bind($abstractClass, function($app) use($abstractClass, $name) {
+            return new $abstractClass($app['config']->get("services.$name"));
+        });
+        $this->app->alias($abstractClass, "sts.storage-connect.adapter.$name");
+
+        $this->app->bind($providerClass, function($app) use($providerClass, $name) {
+            return new $providerClass($app['config']->get("services.$name"));
+        });
+        $this->app->alias($providerClass, "sts.storage-connect.provider.$name");
+
+        $this->provides = array_merge($this->provides, [
+            $abstractClass, "sts.storage-connect.adapter.$name", $providerClass, "sts.storage-connect.provider.$name"
+        ]);
     }
 }

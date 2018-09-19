@@ -43,24 +43,24 @@ class UploadException extends \RuntimeException
     }
 
     /**
-     * @param $retry
+     * @param $message
      *
      * @return $this
      */
-    public function retry( $retry)
+    public function retry( $message )
     {
-        $this->retry = $retry;
+        $this->message = $message;
 
         return $this;
     }
 
     /**
-     * @param $disable
+     * @param $message
      * @param null $reason
      */
-    public function disable( $disable, $reason = null)
+    public function disable( $message, $reason = null)
     {
-        $this->disable = $disable;
+        $this->message = $message;
         $this->reason = $reason;
     }
 

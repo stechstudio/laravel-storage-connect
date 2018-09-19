@@ -2,12 +2,16 @@
 namespace STS\StorageConnect\Tests;
 
 use Kunnu\Dropbox\Dropbox;
+use STS\StorageConnect\Drivers\Dropbox\Adapter;
 use STS\StorageConnect\Drivers\Dropbox\Provider;
 use STS\StorageConnect\StorageConnectFacade;
 
 class DropboxTest extends DriverTestCase
 {
     protected $driver = "dropbox";
+
+    protected $adapterClass = Adapter::class;
+    protected $providerClass = Provider::class;
 
     protected function setUp()
     {

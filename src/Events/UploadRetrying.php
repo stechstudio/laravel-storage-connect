@@ -12,6 +12,10 @@ use STS\StorageConnect\Models\CloudStorage;
 class UploadRetrying
 {
     /**
+     * @var string
+     */
+    public $message;
+    /**
      * @var CloudStorage
      */
     public $storage;
@@ -35,6 +39,7 @@ class UploadRetrying
      */
     public function __construct(CloudStorage $storage, UploadException $exception, $sourcePath )
     {
+        $this->message = $exception->getMessage();
         $this->storage = $storage;
         $this->exception = $exception;
         $this->sourcePath = $sourcePath;

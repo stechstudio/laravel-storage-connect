@@ -18,6 +18,11 @@ class Adapter extends AbstractAdapter
     protected $driver = "dropbox";
 
     /**
+     * @var string
+     */
+    protected $providerClass = Provider::class;
+
+    /**
      * @param $user
      *
      * @return array
@@ -97,14 +102,6 @@ class Adapter extends AbstractAdapter
         }
 
         return $upload->retry("Unknown Dropbox exception: " . $dropbox->getMessage());
-    }
-
-    /**
-     * @return \SocialiteProviders\Manager\OAuth2\AbstractProvider
-     */
-    protected function makeProvider()
-    {
-        return new Provider($this->config);
     }
 
     /**

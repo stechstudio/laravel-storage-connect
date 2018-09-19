@@ -1,5 +1,10 @@
 # Laravel Storage Connect
 
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/stechstudio/laravel-storage-connect.svg?style=flat-square)](https://packagist.org/packages/stechstudio/laravel-storage-connect)
+[![Build Status](https://travis-ci.org/stechstudio/laravel-storage-connect.svg?branch=master)](https://travis-ci.org/stechstudio/laravel-storage-connect)
+[![Quality Score](https://img.shields.io/scrutinizer/g/stechstudio/laravel-storage-connect.svg?style=flat-square)](https://scrutinizer-ci.com/g/stechstudio/laravel-storage-connect)
+[![Total Downloads](https://img.shields.io/packagist/dt/stechstudio/laravel-storage-connect.svg?style=flat-square)](https://packagist.org/packages/stechstudio/laravel-storage-connect)
+
 This package is designed to drastically simplify the process of authenticating to a user's cloud storage account uploading files.
  
  - Handles OAuth flow to authorize a cloud storage account

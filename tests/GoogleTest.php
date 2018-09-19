@@ -2,12 +2,16 @@
 namespace STS\StorageConnect\Tests;
 
 use Google_Service_Drive;
+use STS\StorageConnect\Drivers\Google\Adapter;
 use STS\StorageConnect\Drivers\Google\Provider;
 use STS\StorageConnect\StorageConnectFacade;
 
 class GoogleTest extends DriverTestCase
 {
     protected $driver = "google";
+
+    protected $adapterClass = Adapter::class;
+    protected $providerClass = Provider::class;
 
     protected function setUp()
     {

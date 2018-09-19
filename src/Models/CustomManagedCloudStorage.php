@@ -32,12 +32,12 @@ class CustomManagedCloudStorage extends CloudStorage
     }
 
     /**
-     * @param array|string $attributes
+     * @param array $attributes
      * @param $saveCallback
      *
-     * @return $this|CloudStorage
+     * @return $this
      */
-    public function restore($attributes, $saveCallback)
+    public function restore(array $attributes, $saveCallback)
     {
         $this->fill($attributes);
         $this->saveCallback = $saveCallback;
@@ -49,7 +49,7 @@ class CustomManagedCloudStorage extends CloudStorage
     /**
      * @param array $options
      *
-     * @return bool|void
+     * @return void
      */
     public function save(array $options = [])
     {

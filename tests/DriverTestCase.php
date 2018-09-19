@@ -15,6 +15,9 @@ abstract class DriverTestCase extends TestCase
 {
     protected $driver;
 
+    protected $adapterClass;
+    protected $providerClass;
+
     protected $token = "ABCDEFG";
 
     public function testAdapter()
@@ -52,18 +55,20 @@ abstract class DriverTestCase extends TestCase
     {
         Event::fake();
 
+        /** @var CloudStorage $storage */
         $storage = factory(TestUser::class)->create()->getCloudStorage($this->driver);
 
         $storage->adapter()->setService($this->mockService());
+        app()->instance($this->adapterClass, $storage->adapter());
+        app()->instance("sts.storage-connect.adapter." . $this->driver, $storage->adapter());
+
         $response = $storage->authorize('/final-redirect');
 
         $query = parse_url($response->getTargetUrl())['query'];
 
         $storage->adapter()->setProvider($this->mockProvider());
-        $manager = new TestManager(app());
-        $manager->setAdapter($storage->adapter());
 
-        $manager->finish($this->driver);
+        StorageConnectFacade::finish($this->driver);
 
         /** @var CloudStorage $storage */
         $storage = $storage->fresh();

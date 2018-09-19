@@ -7,6 +7,13 @@ use STS\StorageConnect\Models\CustomManagedCloudStorage;
 
 class CustomManagedStorageTest extends TestCase
 {
+    public function setUp()
+    {
+        parent::setUp();
+
+        $this->setupDropbox();
+    }
+
     public function testMissingLoadCallback()
     {
         $this->expectException(\UnexpectedValueException::class);

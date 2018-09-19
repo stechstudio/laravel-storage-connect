@@ -18,6 +18,11 @@ class Adapter extends AbstractAdapter
     protected $driver = "google";
 
     /**
+     * @var string
+     */
+    protected $providerClass = Provider::class;
+
+    /**
      * @param $user
      *
      * @return array
@@ -38,14 +43,6 @@ class Adapter extends AbstractAdapter
         $about = $this->service()->about->get();
 
         return new Quota($about->getQuotaBytesTotal(), $about->getQuotaBytesUsed());
-    }
-
-    /**
-     * @return \SocialiteProviders\Manager\OAuth2\AbstractProvider
-     */
-    protected function makeProvider()
-    {
-        return new Provider($this->config);
     }
 
     /**
