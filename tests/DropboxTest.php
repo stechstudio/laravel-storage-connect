@@ -2,7 +2,6 @@
 namespace STS\StorageConnect\Tests;
 
 use Kunnu\Dropbox\Dropbox;
-use Laravel\Socialite\Two\User;
 use STS\StorageConnect\Drivers\Dropbox\Provider;
 use STS\StorageConnect\StorageConnectFacade;
 

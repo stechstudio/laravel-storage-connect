@@ -165,17 +165,6 @@ abstract class AbstractAdapter
     }
 
     /**
-     * @param $method
-     * @param $parameters
-     *
-     * @return mixed
-     */
-    public function __call($method, $parameters)
-    {
-        return $this->service()->$method(...$parameters);
-    }
-
-    /**
      * @return AbstractProvider
      */
     abstract protected function makeProvider();
