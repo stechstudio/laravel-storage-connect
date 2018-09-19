@@ -16,8 +16,8 @@ class CustomManagedCloudStorage extends CloudStorage
     protected $saveCallback;
 
     /**
-     * @param $driver
-     * @param $saveCallback
+     * @param string $driver
+     * @param callable $saveCallback
      *
      * @return CustomManagedCloudStorage
      */
@@ -33,7 +33,7 @@ class CustomManagedCloudStorage extends CloudStorage
 
     /**
      * @param array $attributes
-     * @param $saveCallback
+     * @param callable $saveCallback
      *
      * @return $this
      */
