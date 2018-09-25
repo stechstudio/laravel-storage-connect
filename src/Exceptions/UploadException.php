@@ -49,6 +49,7 @@ class UploadException extends \RuntimeException
      */
     public function retry( $message )
     {
+        $this->retry = true;
         $this->message = $message;
 
         return $this;

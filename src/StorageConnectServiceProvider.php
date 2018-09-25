@@ -8,13 +8,6 @@ use STS\StorageConnect\Subscribers\LogsActivity;
 class StorageConnectServiceProvider extends ServiceProvider
 {
     /**
-     * Indicates if loading of the provider is deferred.
-     *
-     * @var bool
-     */
-    protected $defer = true;
-
-    /**
      * Bootstrap the application services.
      */
     public function boot()

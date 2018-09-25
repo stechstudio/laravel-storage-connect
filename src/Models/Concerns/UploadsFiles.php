@@ -10,6 +10,9 @@ use STS\StorageConnect\Events\UploadSucceeded;
 use STS\StorageConnect\Exceptions\UploadException;
 use STS\StorageConnect\Jobs\UploadFile;
 
+/**
+ * @property Carbon uploaded_at
+ */
 trait UploadsFiles
 {
     /**

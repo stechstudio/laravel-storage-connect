@@ -3,8 +3,11 @@ namespace STS\StorageConnect\Tests;
 
 use Carbon\Carbon;
 use STS\StorageConnect\Drivers\AbstractAdapter;
+use STS\StorageConnect\Events\CloudStorageDisabled;
+use STS\StorageConnect\Events\CloudStorageEnabled;
 use STS\StorageConnect\Models\CloudStorage;
 use STS\StorageConnect\Types\Quota;
+use Event;
 
 class CloudStorageTest extends TestCase
 {
@@ -69,11 +72,15 @@ class CloudStorageTest extends TestCase
 
         $this->assertFalse($s->isEnabled());
 
+        Event::fake();
         $s->enable();
+        Event::assertDispatched(CloudStorageEnabled::class);
 
         $this->assertTrue($s->isEnabled());
 
+        Event::fake();
         $s->disable('full');
+        Event::assertDispatched(CloudStorageDisabled::class);
 
         $this->assertFalse($s->isEnabled());
         $this->assertTrue($s->isFull());

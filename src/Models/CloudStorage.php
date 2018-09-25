@@ -7,7 +7,13 @@ use STS\StorageConnect\Exceptions\StorageUnavailableException;
 
 /**
  * Class CloudStorage
- * @package STS\StorageConnect\Models
+ *
+ * @property int $id
+ * @property int $owner_id
+ * @property string $owner_type
+ * @property Model $owner
+ * @property string $name
+ * @property string $email
  */
 class CloudStorage extends Model
 {
