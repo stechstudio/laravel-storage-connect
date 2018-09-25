@@ -1,5 +1,4 @@
 <?php
-dd("here");
 Route::prefix(config('storage-connect.path'))->middleware(config('storage-connect.middleware'))->group(function() {
 
     if(config('storage-connect.authorize_route')) {
