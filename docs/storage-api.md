@@ -14,6 +14,12 @@ Determines whether a connection has been setup, and is currently enabled.
 
 Determines if the connection is disabled due to storage quota.
 
+### `isReady(): bool`
+
+Determines whether a connection has been setup, is currently enabled, and has storage space available.
+
+*This is the method you want to rely on to see if you can upload a file.*
+
 ### `getUserName(): string`
 
 Returns the registered user's name from the cloud storage account. 

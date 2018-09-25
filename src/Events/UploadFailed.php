@@ -2,6 +2,7 @@
 
 namespace STS\StorageConnect\Events;
 
+use Illuminate\Database\Eloquent\Model;
 use STS\StorageConnect\Exceptions\UploadException;
 use STS\StorageConnect\Models\CloudStorage;
 
@@ -31,17 +32,23 @@ class UploadFailed
     public $sourcePath;
 
     /**
+     * @var Model
+     */
+    public $target;
+
+    /**
      * UploadFailed constructor.
      *
      * @param CloudStorage $storage
      * @param UploadException $exception
-     * @param $sourcePath
+     * @param $target
      */
-    public function __construct(CloudStorage $storage, UploadException $exception, $sourcePath )
+    public function __construct(CloudStorage $storage, UploadException $exception, $target )
     {
         $this->message = $exception->getMessage();
         $this->storage = $storage;
         $this->exception = $exception;
-        $this->sourcePath = $sourcePath;
+        $this->sourcePath = $exception->getSourcePath();
+        $this->target = $target;
     }
 }

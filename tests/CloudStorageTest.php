@@ -1,7 +1,10 @@
 <?php
 namespace STS\StorageConnect\Tests;
 
+use Carbon\Carbon;
+use STS\StorageConnect\Drivers\AbstractAdapter;
 use STS\StorageConnect\Models\CloudStorage;
+use STS\StorageConnect\Types\Quota;
 
 class CloudStorageTest extends TestCase
 {
@@ -85,5 +88,52 @@ class CloudStorageTest extends TestCase
         $this->assertFalse($s->isEnabled());
         $this->assertTrue($s->isTokenInvalid());
         $this->assertTrue($s->isConnected());
+    }
+
+    public function testSleepWakeup()
+    {
+        $this->setupDropbox();
+
+        /** @var CloudStorage $s */
+        $s = factory(TestUser::class)->create()->dropbox;
+
+        $this->assertInstanceOf(AbstractAdapter::class, $s->adapter());
+
+        $s = unserialize(serialize($s));
+
+        $this->assertInstanceOf(AbstractAdapter::class, $s->adapter());
+    }
+
+    public function testNeedToCheckQuota()
+    {
+        /** @var CloudStorage $s */
+        $s = factory(TestUser::class)->create()->dropbox;
+
+        $this->assertNull($s->space_checked_at);
+        $this->assertTrue($s->shouldCheckSpace());
+
+        $s->space_checked_at = Carbon::now()->subHour(2);
+        $this->assertFalse($s->shouldCheckSpace());
+
+        $s->full = 1;
+        $this->assertTrue($s->shouldCheckSpace());
+
+        $s->full = 0;
+        $s->space_checked_at = Carbon::now()->subDay(2);
+        $this->assertTrue($s->shouldCheckSpace());
+    }
+
+    public function testUpdateQuota()
+    {
+        $this->setupDropbox();
+
+        /** @var CloudStorage $s */
+        $s = factory(TestUser::class)->create()->dropbox;
+
+        $s->updateQuota(new Quota(1000, 999));
+        $this->assertTrue($s->isFull());
+
+        $s->updateQuota(new Quota(1000, 100));
+        $this->assertFalse($s->isFull());
     }
 }

@@ -35,3 +35,44 @@ $model->dropbox->upload('https://www.somewebsite.com/source.pdf', 'My File.pdf')
 If you are using Dropbox, this will use the `save_url` method. Dropbox will pull the file directly from the URL.
 
 If you are using Google, this package will download the file from the URL first, and then do a normal upload.
+
+## Uploading an Eloquent model
+
+In all the above examples we are explicitly providing the source and destination paths as strings. There is also an option to just point to an Eloquent model for the upload.
+
+Perhaps you have a `files` table in your database. Edit the `Files` model, implement the `UploadTarget` contract, and add two accessors like this: 
+
+```php
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use STS\StorageConnect\Contracts\UploadTarget;
+
+class File extends Model implements UploadTarget {
+    
+    public function getUploadSourcePathAttribute()
+    {
+        // Return the source path for this file    
+    }
+    
+    public function getUploadDestinationPathAttribute()
+    {
+        // Return the destination path for the upload
+    }
+    
+    ...
+```
+
+Now you can upload an instance of this model directly:
+
+```php
+$model->dropbox->upload($file);
+```
+
+One big advantage of this approach is that all the [upload related events](./events.md) will now include this target model, for your reference.
+
+```php
+Event::listen(UploadSucceeded::class, function($event) {
+       // $event->target is a reference to the $file model you asked to upload
+});
+```

@@ -70,7 +70,8 @@ class StorageConnectManager extends Manager
      */
     public function isSupportedDriver($driver)
     {
-        return in_array($driver, $this->app['config']['storage-connect.enabled'])
+        return in_array($driver, $this->registered)
+            && in_array($driver, $this->app['config']['storage-connect.enabled'])
             && is_array($this->app['config']["services.$driver"])
             && $this->app['config']["services.$driver.client_id"] != null
             && $this->app['config']["services.$driver.client_secret"] != null;
@@ -219,5 +220,25 @@ class StorageConnectManager extends Manager
     public function __call($method, $parameters)
     {
         return $this->driver()->$method(...$parameters);
+    }
+
+    /**
+     * @param $name
+     * @param $abstractClass
+     * @param $providerClass
+     */
+    public function register($name, $abstractClass, $providerClass)
+    {
+        $this->app->bind($abstractClass, function($app) use($abstractClass, $name) {
+            return new $abstractClass($app['config']->get("services.$name"));
+        });
+        $this->app->alias($abstractClass, "sts.storage-connect.adapter.$name");
+
+        $this->app->bind($providerClass, function($app) use($providerClass, $name) {
+            return new $providerClass($app['config']->get("services.$name"));
+        });
+        $this->app->alias($providerClass, "sts.storage-connect.provider.$name");
+
+        $this->registered[] = $name;
     }
 }
