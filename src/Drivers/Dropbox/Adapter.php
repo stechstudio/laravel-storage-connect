@@ -61,7 +61,7 @@ class Adapter extends AbstractAdapter
                 return $this->service()->saveUrl($destinationPath, $sourcePath);
             }
 
-            return $this->service()->upload($sourcePath, $destinationPath, [
+            return $this->service()->upload(new File($sourcePath), $destinationPath, [
                 'mode' => 'overwrite'
             ]);
         } catch (DropboxClientException $e) {
