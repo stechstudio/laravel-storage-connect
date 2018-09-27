@@ -15,7 +15,7 @@ class CreateCloudStoragesTable extends Migration
             $table->increments('id');
             $table->morphs('owner');
             $table->string('driver');
-            $table->json('token')->nullable();
+            $table->text('token')->nullable();
 
             $table->string('name')->nullable();
             $table->string('email')->nullable();
