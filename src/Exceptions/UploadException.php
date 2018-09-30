@@ -3,6 +3,7 @@
 namespace STS\StorageConnect\Exceptions;
 
 use STS\StorageConnect\Models\CloudStorage;
+use STS\StorageConnect\UploadRequest;
 use Throwable;
 
 /**
@@ -32,13 +33,13 @@ class UploadException extends \RuntimeException
     protected $storage;
 
     /**
-     * @var string
+     * @var UploadRequest
      */
-    protected $sourcePath;
+    protected $request;
 
-    public function __construct($sourcePath, $previous = null)
+    public function __construct(UploadRequest $request, $previous = null)
     {
-        $this->sourcePath = $sourcePath;
+        $this->request = $request;
         parent::__construct(null, null, $previous);
     }
 
@@ -65,19 +66,12 @@ class UploadException extends \RuntimeException
         $this->reason = $reason;
     }
 
-    public function setSourcePath($path)
-    {
-        $this->sourcePath = $path;
-
-        return $this;
-    }
-
     /**
-     * @return string
+     * @return UploadRequest
      */
-    public function getSourcePath()
+    public function getRequest()
     {
-        return $this->sourcePath;
+        return $this->request;
     }
 
     /**

@@ -7,10 +7,10 @@ use STS\StorageConnect\Models\CloudStorage;
 use STS\StorageConnect\UploadResponse;
 
 /**
- * Class UploadSucceeded
+ * Class UploadInProgress
  * @package STS\StorageConnect\Events
  */
-class UploadSucceeded
+class UploadInProgress
 {
     /**
      * @var CloudStorage

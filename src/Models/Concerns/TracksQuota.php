@@ -3,7 +3,7 @@
 namespace STS\StorageConnect\Models\Concerns;
 
 use Carbon\Carbon;
-use STS\StorageConnect\Types\Quota;
+use STS\StorageConnect\Models\Quota;
 
 trait TracksQuota
 {
@@ -48,7 +48,7 @@ trait TracksQuota
     }
 
     /**
-     * @param Quota $quota
+     * @param \STS\StorageConnect\Models\Quota $quota
      *
      * @return $this
      */

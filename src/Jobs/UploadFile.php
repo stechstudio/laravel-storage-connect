@@ -1,7 +1,9 @@
 <?php
 namespace STS\StorageConnect\Jobs;
 
+use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use STS\Backoff\Backoff;
@@ -14,7 +16,7 @@ use STS\StorageConnect\Models\CloudStorage;
  */
 class UploadFile implements ShouldQueue
 {
-    use InteractsWithQueue, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     /**
      * @var string

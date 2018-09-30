@@ -5,10 +5,13 @@ namespace STS\StorageConnect\Drivers\Dropbox;
 use Kunnu\Dropbox\Dropbox;
 use Kunnu\Dropbox\DropboxApp;
 use Kunnu\Dropbox\Exceptions\DropboxClientException;
+use Kunnu\Dropbox\Models\FileMetadata;
 use STS\StorageConnect\Drivers\AbstractAdapter;
 use STS\StorageConnect\Exceptions\UploadException;
 use STS\StorageConnect\Models\CloudStorage;
-use STS\StorageConnect\Types\Quota;
+use STS\StorageConnect\Models\Quota;
+use STS\StorageConnect\UploadRequest;
+use STS\StorageConnect\UploadResponse;
 
 class Adapter extends AbstractAdapter
 {
@@ -27,7 +30,7 @@ class Adapter extends AbstractAdapter
      *
      * @return array
      */
-    protected function mapUserDetails($user)
+    protected function mapUserDetails( $user )
     {
         return [
             'name'  => $user->user['name']['display_name'],
@@ -36,7 +39,7 @@ class Adapter extends AbstractAdapter
     }
 
     /**
-     * @return Quota
+     * @return \STS\StorageConnect\Models\Quota
      */
     public function getQuota()
     {
@@ -46,36 +49,33 @@ class Adapter extends AbstractAdapter
     }
 
     /**
-     * @param $sourcePath
-     * @param $destinationPath
+     * @param UploadRequest $request
      *
-     * @return mixed
-     * @throws UploadException
+     * @return UploadResponse
+     *
      */
-    public function upload($sourcePath, $destinationPath)
+    public function upload( UploadRequest $request )
     {
-        $destinationPath = str_start($destinationPath, '/');
-
         try {
-            if (starts_with($sourcePath, "http")) {
-                return $this->service()->saveUrl($destinationPath, $sourcePath);
+            if (starts_with($request->getSourcePath(), "http")) {
+                return new UploadResponse($request, $this->service()->saveUrl($request->getDestinationPath(), $request->getSourcePath()), true);
             }
 
-            return $this->service()->upload(new File($sourcePath), $destinationPath, [
+            return new UploadResponse($request, $this->service()->upload(new File($request->getSourcePath()), $request->getDestinationPath(), [
                 'mode' => 'overwrite'
-            ]);
+            ]));
         } catch (DropboxClientException $e) {
-            throw $this->handleException($e, new UploadException($sourcePath, $e));
+            throw $this->handleUploadException($e, new UploadException($request, $e));
         }
     }
 
     /**
      * @param DropboxClientException $dropbox
-     * @param UploadException $upload
+     * @param UploadException        $upload
      *
      * @return UploadException
      */
-    protected function handleException(DropboxClientException $dropbox, UploadException $upload)
+    protected function handleUploadException( DropboxClientException $dropbox, UploadException $upload )
     {
         // First check for connection failure
         if (str_contains($dropbox->getMessage(), "Connection timed out")) {
@@ -102,6 +102,27 @@ class Adapter extends AbstractAdapter
         }
 
         return $upload->retry("Unknown Dropbox exception: " . $dropbox->getMessage());
+    }
+
+    /**
+     * @param UploadResponse $response
+     *
+     * @return UploadResponse
+     */
+    public function checkUploadStatus( UploadResponse $response )
+    {
+        $result = $this->service()->checkJobStatus($response->getOriginal());
+
+        if($response instanceof FileMetadata) {
+            return new UploadResponse( $response->getRequest(), $result );
+        }
+
+        if($response == "in_progress") {
+            $response->incrementStatusCheck();
+            return $response;
+        }
+
+
     }
 
     /**

@@ -7,8 +7,10 @@ use Google_Http_MediaFileUpload;
 use Google_Service_Drive;
 use Google_Service_Drive_DriveFile;
 use STS\StorageConnect\Drivers\AbstractAdapter;
-use STS\StorageConnect\Types\Quota;
+use STS\StorageConnect\Models\Quota;
 use StorageConnect;
+use STS\StorageConnect\UploadRequest;
+use STS\StorageConnect\UploadResponse;
 
 class Adapter extends AbstractAdapter
 {
@@ -69,22 +71,22 @@ class Adapter extends AbstractAdapter
     }
 
     /**
-     * @param $sourcePath
-     * @param $destinationPath
+     * @param UploadRequest $request
      *
      * @return string
+     *
      */
-    public function upload( $sourcePath, $destinationPath )
+    public function upload( UploadRequest $request )
     {
-        $file = $this->prepareFile($destinationPath);
-        list($filesize, $mimeType) = $this->stat($sourcePath);
+        $file = $this->prepareFile($request->getDestinationPath());
+        list($filesize, $mimeType) = $this->stat($request->getSourcePath());
 
         if ($filesize >= 5 * 1024 * 1024) {
-            return $this->uploadChunked($sourcePath, $file, $filesize);
+            return $this->uploadChunked($request->getSourcePath(), $file, $filesize);
         }
 
         return $this->service()->files->create($file, [
-            'data'       => file_get_contents($sourcePath),
+            'data'       => file_get_contents($request->getSourcePath()),
             'mimeType'   => $mimeType,
             'uploadType' => 'media',
         ])->id;
@@ -212,5 +214,10 @@ class Adapter extends AbstractAdapter
             'spaces' => 'drive',
             'fields' => 'files(id, name)',
         ]))->first();
+    }
+    
+    public function checkUploadStatus( UploadResponse $response )
+    {
+
     }
 }

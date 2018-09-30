@@ -41,14 +41,13 @@ class UploadRetrying
      *
      * @param CloudStorage $storage
      * @param UploadException $exception
-     * @param null $target
      */
-    public function __construct(CloudStorage $storage, UploadException $exception, $target = null )
+    public function __construct(CloudStorage $storage, UploadException $exception )
     {
         $this->message = $exception->getMessage();
         $this->storage = $storage;
         $this->exception = $exception;
-        $this->sourcePath = $exception->getSourcePath();
-        $this->target = $target;
+        $this->sourcePath = $exception->getRequest()->getSourcePath();
+        $this->target = $exception->getRequest()->getTarget();
     }
 }

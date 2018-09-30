@@ -1,14 +1,20 @@
 <?php
+
 namespace STS\StorageConnect\Models\Concerns;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use STS\StorageConnect\Contracts\UploadTarget;
 use STS\StorageConnect\Events\UploadFailed;
+use STS\StorageConnect\Events\UploadInProgress;
 use STS\StorageConnect\Events\UploadRetrying;
+use STS\StorageConnect\Events\UploadStarted;
 use STS\StorageConnect\Events\UploadSucceeded;
 use STS\StorageConnect\Exceptions\UploadException;
+use STS\StorageConnect\Jobs\CheckUploadStatus;
 use STS\StorageConnect\Jobs\UploadFile;
+use STS\StorageConnect\UploadRequest;
+use STS\StorageConnect\UploadResponse;
 
 /**
  * @property Carbon uploaded_at
@@ -21,9 +27,9 @@ trait UploadsFiles
      * @param bool $shouldQueue
      * @param null $queueJob
      *
-     * @return bool
+     * @return UploadResponse|bool
      */
-    public function upload($source, $destinationPath = null, $shouldQueue = true, $queueJob = null)
+    public function upload( $source, $destinationPath = null, $shouldQueue = true, $queueJob = null )
     {
         $this->verify();
 
@@ -31,78 +37,74 @@ trait UploadsFiles
             return dispatch(new UploadFile($source, $destinationPath, $this));
         }
 
-        list($sourcePath, $destinationPath, $targetModel) = $this->preparePaths($source, $destinationPath);
+        $request = new UploadRequest($source, $destinationPath);
 
         try {
-            return $this->handleUpload($sourcePath, $destinationPath, $targetModel);
+            return $this->handleUpload($request);
         } catch (UploadException $exception) {
-            $this->handleUploadError($exception, $queueJob, $targetModel);
+            $this->handleUploadError($exception, $queueJob);
+
+            return false;
+        } finally {
+            $this->ping();
         }
-
-        $this->ping();
-
-        return false;
     }
 
     /**
-     * @param $source
-     * @param null $destinationPath
+     * @param UploadRequest $request
      *
-     * @return array
+     * @return UploadResponse
      */
-    protected function preparePaths($source, $destinationPath = null)
+    protected function handleUpload( UploadRequest $request )
     {
-        if($source instanceof Model && $source instanceof UploadTarget) {
-            return [
-                $source->upload_source_path,
-                $destinationPath ?: $source->upload_destination_path,
-                $source
-            ];
-        }
-
-        return [
-            (string) $source,
-            $destinationPath,
-            null
-        ];
+        return $this->processResponse($this->adapter()->upload($request));
     }
 
     /**
-     * @param $sourcePath
-     * @param $destinationPath
-     * @param null $targetModel
-     *
-     * @return bool
+     * @param UploadResponse $response
      */
-    protected function handleUpload($sourcePath, $destinationPath, $targetModel = null)
+    public function checkUploadStatus( UploadResponse $response )
     {
-        if (starts_with($sourcePath, "s3://")) {
-            app('aws')->createClient('s3')->registerStreamWrapper();
+        $this->processResponse($this->adapter()->checkUploadStatus($response));
+    }
+
+    /**
+     * @param UploadResponse $response
+     *
+     * @return UploadResponse
+     */
+    protected function processResponse( UploadResponse $response )
+    {
+        if ($response->isAsync()) {
+            dispatch(new CheckUploadStatus($this, $response));
+
+            if ($response->getStatusChecks() == 0) {
+                event(new UploadStarted($this, $response));
+            } else {
+                event(new UploadInProgress($this, $response));
+            }
+        } else {
+            $this->uploaded_at = Carbon::now();
+            $this->save();
+
+            event(new UploadSucceeded($this, $response));
         }
 
-        $this->adapter()->upload($sourcePath, $destinationPath);
-
-        $this->uploaded_at = Carbon::now();
-        $this->save();
-
-        event(new UploadSucceeded($this, $sourcePath, $destinationPath, $targetModel));
-
-        return true;
+        return $response;
     }
 
     /**
      * @param UploadException $exception
-     * @param null $job
-     * @param null $targetModel
+     * @param null            $job
      *
      * @return mixed
      */
-    protected function handleUploadError(UploadException $exception, $job = null, $targetModel = null)
+    protected function handleUploadError( UploadException $exception, $job = null )
     {
         $exception->setStorage($this);
 
         if ($exception->shouldRetry() && $job) {
-            event(new UploadRetrying($this, $exception, $targetModel));
+            event(new UploadRetrying($this, $exception));
 
             $job->release();
 
@@ -117,6 +119,6 @@ trait UploadsFiles
             $job->fail($exception);
         }
 
-        event(new UploadFailed($this, $exception, $targetModel));
+        event(new UploadFailed($this, $exception));
     }
 }

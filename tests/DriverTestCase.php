@@ -8,7 +8,7 @@ use STS\StorageConnect\Events\CloudStorageSetup;
 use STS\StorageConnect\Models\CloudStorage;
 use STS\StorageConnect\StorageConnectFacade;
 use STS\StorageConnect\StorageConnectManager;
-use STS\StorageConnect\Types\Quota;
+use STS\StorageConnect\Models\Quota;
 use Event;
 
 abstract class DriverTestCase extends TestCase

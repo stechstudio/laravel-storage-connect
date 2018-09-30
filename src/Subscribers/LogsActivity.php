@@ -6,7 +6,9 @@ use STS\StorageConnect\Events\CloudStorageEnabled;
 use STS\StorageConnect\Events\CloudStorageSetup;
 use Log;
 use STS\StorageConnect\Events\UploadFailed;
+use STS\StorageConnect\Events\UploadInProgress;
 use STS\StorageConnect\Events\UploadRetrying;
+use STS\StorageConnect\Events\UploadStarted;
 use STS\StorageConnect\Events\UploadSucceeded;
 
 /**
@@ -39,6 +41,18 @@ class LogsActivity
 
         $dispatcher->listen(UploadFailed::class, function (UploadFailed $event) {
             $this->error($event->message, $event->storage, [
+                'source'  => $event->sourcePath
+            ]);
+        });
+
+        $dispatcher->listen(UploadStarted::class, function (UploadRetrying $event) {
+            $this->info("Async upload started", $event->storage, [
+                'source'  => $event->sourcePath
+            ]);
+        });
+
+        $dispatcher->listen(UploadInProgress::class, function (UploadRetrying $event) {
+            $this->info("Async upload in progress", $event->storage, [
                 'source'  => $event->sourcePath
             ]);
         });

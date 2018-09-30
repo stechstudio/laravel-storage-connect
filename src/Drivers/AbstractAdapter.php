@@ -7,7 +7,9 @@ use SocialiteProviders\Manager\OAuth2\AbstractProvider;
 use STS\StorageConnect\Events\CloudStorageSetup;
 use STS\StorageConnect\Models\CloudStorage;
 use STS\StorageConnect\Models\CustomManagedCloudStorage;
-use STS\StorageConnect\Types\Quota;
+use STS\StorageConnect\Models\Quota;
+use STS\StorageConnect\UploadRequest;
+use STS\StorageConnect\UploadResponse;
 
 abstract class AbstractAdapter
 {
@@ -203,10 +205,16 @@ abstract class AbstractAdapter
     abstract protected function mapUserDetails($user);
 
     /**
-     * @param $sourcePath
-     * @param $destinationPath
+     * @param UploadRequest $request
      *
-     * @return mixed
+     * @return UploadResponse
      */
-    abstract function upload($sourcePath, $destinationPath);
+    abstract function upload(UploadRequest $request);
+
+    /**
+     * @param UploadResponse $response
+     *
+     * @return UploadResponse
+     */
+    abstract function checkUploadStatus(UploadResponse $response);
 }

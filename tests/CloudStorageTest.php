@@ -6,7 +6,7 @@ use STS\StorageConnect\Drivers\AbstractAdapter;
 use STS\StorageConnect\Events\CloudStorageDisabled;
 use STS\StorageConnect\Events\CloudStorageEnabled;
 use STS\StorageConnect\Models\CloudStorage;
-use STS\StorageConnect\Types\Quota;
+use STS\StorageConnect\Models\Quota;
 use Event;
 
 class CloudStorageTest extends TestCase

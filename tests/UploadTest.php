@@ -11,6 +11,8 @@ use STS\StorageConnect\Jobs\UploadFile;
 use STS\StorageConnect\Models\CloudStorage;
 use Event;
 use Queue;
+use STS\StorageConnect\UploadRequest;
+use STS\StorageConnect\UploadResponse;
 
 class UploadTest extends TestCase
 {
@@ -42,7 +44,7 @@ class UploadTest extends TestCase
         Event::fake();
 
         // Both source path and destination path are pulled from the model
-        $this->storage->upload($target, null, false);
+        $response = $this->storage->upload($target, null, false);
 
         Event::assertDispatched(UploadSucceeded::class, function(UploadSucceeded $event) use($target) {
             return $event->target->is($target) && $event->sourcePath == "/tmp/foobar.txt" && $event->destinationPath == "uploaded.txt";
@@ -72,7 +74,7 @@ class UploadTest extends TestCase
     public function testFailedUpload()
     {
         $this->storage->adapter()->result(function() {
-            throw new UploadException('foobar');
+            throw new UploadException(new UploadRequest('foobar'));
         });
 
         Event::fake();
@@ -83,7 +85,7 @@ class UploadTest extends TestCase
     public function testRetryingUpload()
     {
         $this->storage->adapter()->result(function() {
-            throw (new UploadException('foobar'))->retry('please');
+            throw (new UploadException(new UploadRequest('foobar')))->retry('please');
         });
 
         Event::fake();
@@ -103,9 +105,9 @@ class UploadTestAdapter extends Adapter {
     {
         $this->result = $result;
     }
-    public function upload($sourcePath, $destinationPath)
+    public function upload(UploadRequest $request)
     {
-        return value($this->result);
+        return new UploadResponse($request, value($this->result));
     }
 }
 

@@ -1,11 +1,11 @@
 <?php
-namespace STS\StorageConnect\Types;
+
+namespace STS\StorageConnect\Models;
 
 use Carbon\Carbon;
 
 /**
  * Class Quota
- * @package STS\StorageConnect\Types
  */
 class Quota
 {
@@ -13,6 +13,7 @@ class Quota
      * @var int
      */
     protected $total;
+
     /**
      * @var int
      */
@@ -29,7 +30,7 @@ class Quota
      * @param $total
      * @param $used
      */
-    public function __construct( $total, $used)
+    public function __construct( $total, $used )
     {
         $this->total = $total;
         $this->used = $used;
