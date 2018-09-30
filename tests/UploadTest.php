@@ -36,7 +36,7 @@ class UploadTest extends TestCase
     {
         $target = new TestFile([
             'source_path' => '/tmp/foobar.txt',
-            'destination_path' => 'uploaded.txt'
+            'destination_path' => '/uploaded.txt'
         ]);
 
         $this->storage->adapter()->result(true);
@@ -44,28 +44,28 @@ class UploadTest extends TestCase
         Event::fake();
 
         // Both source path and destination path are pulled from the model
-        $response = $this->storage->upload($target, null, false);
+        $this->storage->upload($target, null, false);
 
         Event::assertDispatched(UploadSucceeded::class, function(UploadSucceeded $event) use($target) {
-            return $event->target->is($target) && $event->sourcePath == "/tmp/foobar.txt" && $event->destinationPath == "uploaded.txt";
+            return $event->target->is($target) && $event->sourcePath == "/tmp/foobar.txt" && $event->destinationPath == "/uploaded.txt";
         });
 
         Event::fake();
 
         // Do it again with an explicit destination path
-        $this->storage->upload($target, "destination.txt", false);
+        $this->storage->upload($target, "/destination.txt", false);
 
         Event::assertDispatched(UploadSucceeded::class, function(UploadSucceeded $event) use($target) {
-            return $event->target->is($target) && $event->sourcePath == "/tmp/foobar.txt" && $event->destinationPath == "destination.txt";
+            return $event->target->is($target) && $event->sourcePath == "/tmp/foobar.txt" && $event->destinationPath == "/destination.txt";
         });
 
         Event::fake();
 
         // Now with both string paths
-        $this->storage->upload('/tmp/source.txt', "newfile.txt", false);
+        $this->storage->upload('/tmp/source.txt', "/newfile.txt", false);
 
         Event::assertDispatched(UploadSucceeded::class, function(UploadSucceeded $event) use($target) {
-            return is_null($event->target) && $event->sourcePath == "/tmp/source.txt" && $event->destinationPath == "newfile.txt";
+            return is_null($event->target) && $event->sourcePath == "/tmp/source.txt" && $event->destinationPath == "/newfile.txt";
         });
 
         $this->assertEquals(Carbon::now()->toFormattedDateString(), $this->storage->uploaded_at->toFormattedDateString());
