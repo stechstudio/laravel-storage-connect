@@ -113,16 +113,15 @@ class Adapter extends AbstractAdapter
     {
         $result = $this->service()->checkJobStatus($response->getOriginal());
 
-        if($response instanceof FileMetadata) {
+        if($result instanceof FileMetadata) {
             return new UploadResponse( $response->getRequest(), $result );
         }
 
-        if($response == "in_progress") {
-            $response->incrementStatusCheck();
+        if($result == "in_progress") {
             return $response;
         }
 
-
+        // TODO handle other possible responses
     }
 
     /**

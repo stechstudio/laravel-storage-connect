@@ -65,6 +65,8 @@ trait UploadsFiles
      */
     public function checkUploadStatus( UploadResponse $response )
     {
+        $response->incrementStatusCheck();
+
         $this->processResponse($this->adapter()->checkUploadStatus($response));
     }
 
