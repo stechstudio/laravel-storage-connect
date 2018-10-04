@@ -63,11 +63,20 @@ trait UploadsFiles
     /**
      * @param UploadResponse $response
      */
-    public function checkUploadStatus( UploadResponse $response )
+    public function checkUploadStatus( UploadResponse $response, $queueJob )
     {
         $response->incrementStatusCheck();
 
-        $this->processResponse($this->adapter()->checkUploadStatus($response));
+        try {
+            $this->processResponse($this->adapter()->checkUploadStatus($response));
+        } catch (UploadException $exception) {
+            if ($exception->shouldDisable()) {
+                $this->disable($exception->getReason());
+                $queueJob->fail($exception);
+            } else {
+                $queueJob->release();
+            }
+        }
     }
 
     /**

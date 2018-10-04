@@ -37,8 +37,8 @@ class CheckUploadStatus implements ShouldQueue
         $this->storage = $storage;
         $this->response = $response;
         $this->delay = (new Backoff)
-            ->setStrategy(new PolynomialStrategy(5, 3))
-            ->setWaitCap(900)
+            ->setStrategy(new PolynomialStrategy(5, 2))
+            ->setWaitCap(300)
             ->getWaitTime($response->getStatusChecks());
     }
 
@@ -47,6 +47,6 @@ class CheckUploadStatus implements ShouldQueue
      */
     public function handle()
     {
-        $this->storage->checkUploadStatus($this->response);
+        $this->storage->checkUploadStatus($this->response, $this);
     }
 }

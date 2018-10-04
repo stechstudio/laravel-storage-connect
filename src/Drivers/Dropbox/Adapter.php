@@ -111,17 +111,19 @@ class Adapter extends AbstractAdapter
      */
     public function checkUploadStatus( UploadResponse $response )
     {
-        $result = $this->service()->checkJobStatus($response->getOriginal());
+        try {
+            $result = $this->service()->checkJobStatus($response->getOriginal());
 
-        if($result instanceof FileMetadata) {
-            return new UploadResponse( $response->getRequest(), $result );
+            if($result instanceof FileMetadata) {
+                return new UploadResponse( $response->getRequest(), $result );
+            }
+
+            if($result == "in_progress") {
+                return $response;
+            }
+        } catch (DropboxClientException $e) {
+            throw $this->handleUploadException($e, new UploadException($response->getRequest(), $e));
         }
-
-        if($result == "in_progress") {
-            return $response;
-        }
-
-        // TODO handle other possible responses
     }
 
     /**
