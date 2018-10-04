@@ -82,6 +82,11 @@ class Adapter extends AbstractAdapter
             return $upload->retry("Connection timeout");
         }
 
+        // Other known errors
+        if (str_contains($dropbox->getMessage(), "Async Job ID cannot be null")) {
+            return $upload->message("Invalid upload job ID");
+        }
+
         // See if we have a parseable error
         $error = json_decode($dropbox->getMessage(), true);
 
@@ -122,6 +127,7 @@ class Adapter extends AbstractAdapter
                 return $response;
             }
         } catch (DropboxClientException $e) {
+            logger($e);
             throw $this->handleUploadException($e, new UploadException($response->getRequest(), $e));
         }
     }

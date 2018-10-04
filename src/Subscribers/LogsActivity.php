@@ -45,13 +45,13 @@ class LogsActivity
             ]);
         });
 
-        $dispatcher->listen(UploadStarted::class, function (UploadRetrying $event) {
+        $dispatcher->listen(UploadStarted::class, function (UploadStarted $event) {
             $this->info("Async upload started", $event->storage, [
                 'source'  => $event->sourcePath
             ]);
         });
 
-        $dispatcher->listen(UploadInProgress::class, function (UploadRetrying $event) {
+        $dispatcher->listen(UploadInProgress::class, function (UploadInProgress $event) {
             $this->info("Async upload in progress", $event->storage, [
                 'source'  => $event->sourcePath
             ]);

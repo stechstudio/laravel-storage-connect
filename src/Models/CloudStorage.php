@@ -37,7 +37,9 @@ class CloudStorage extends Model
         'token'     => 'array',
         'connected' => 'boolean',
         'enabled'   => 'boolean',
-        'full'      => 'boolean'
+        'full'      => 'boolean',
+        'space_checked_at' => 'datetime',
+        'uploaded_at' => 'datetime'
     ];
 
     /**

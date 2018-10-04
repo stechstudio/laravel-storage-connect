@@ -29,7 +29,7 @@ class UploadResponse
     public function __construct( UploadRequest $request, $original, $async = false )
     {
         $this->request = $request;
-        $this->original;
+        $this->original = $original;
         $this->async = $async;
     }
 
