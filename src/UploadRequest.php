@@ -2,10 +2,13 @@
 namespace STS\StorageConnect;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Queue\SerializesModels;
 use STS\StorageConnect\Contracts\UploadTarget;
 
 class UploadRequest
 {
+    use SerializesModels;
+
     /**
      * @var string
      */
