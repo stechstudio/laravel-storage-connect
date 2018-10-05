@@ -76,6 +76,7 @@ class UploadException extends \RuntimeException
      */
     public function disable( $message, $reason = null)
     {
+        $this->disable = true;
         $this->message = $message;
         $this->reason = $reason;
 
