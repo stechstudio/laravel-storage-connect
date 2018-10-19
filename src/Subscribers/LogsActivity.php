@@ -58,7 +58,7 @@ class LogsActivity
         });
 
         $dispatcher->listen(CloudStorageDisabled::class, function (CloudStorageDisabled $event) {
-            $this->warning("Connection disabled: " . $event->message, $event->storage, [
+            $this->warning("Connection disabled", $event->storage, [
                 'reason'  => $event->storage->reason
             ]);
         });
