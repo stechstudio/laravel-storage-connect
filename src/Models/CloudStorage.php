@@ -38,8 +38,14 @@ class CloudStorage extends Model
         'connected' => 'boolean',
         'enabled'   => 'boolean',
         'full'      => 'boolean',
-        'space_checked_at' => 'datetime',
-        'uploaded_at' => 'datetime'
+    ];
+
+    /**
+     * @var array
+     */
+    protected $dates = [
+        'space_checked_at',
+        'uploaded_at'
     ];
 
     /**
