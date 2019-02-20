@@ -2,6 +2,7 @@
 
 namespace STS\StorageConnect\Drivers;
 
+use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use SocialiteProviders\Manager\OAuth2\AbstractProvider;
 use STS\StorageConnect\Events\CloudStorageSetup;
@@ -122,7 +123,8 @@ abstract class AbstractAdapter
             [
                 'token'     => $this->provider()->user()->accessTokenResponseBody,
                 'connected' => 1,
-                'enabled'   => 1
+                'enabled'   => 1,
+                'enabled_at' => Carbon::now()
             ],
             $this->mapUserDetails($this->provider()->user())
         ));

@@ -1,6 +1,7 @@
 <?php
 namespace STS\StorageConnect\Models\Concerns;
 
+use Carbon\Carbon;
 use STS\StorageConnect\Events\CloudStorageDisabled;
 use STS\StorageConnect\Events\CloudStorageEnabled;
 use STS\StorageConnect\Exceptions\StorageUnavailableException;
@@ -88,6 +89,7 @@ trait ManagesStorageConnection
     {
         $this->enabled = 0;
         $this->reason = $reason;
+        $this->disabled_at = Carbon::now();
 
         if ($reason == self::SPACE_FULL) {
             $this->full = 1;
@@ -107,6 +109,7 @@ trait ManagesStorageConnection
         $this->reason = null;
         $this->enabled = 1;
         $this->full = 0;
+        $this->enabled_at = Carbon::now();
 
         $this->save();
         event(new CloudStorageEnabled($this));

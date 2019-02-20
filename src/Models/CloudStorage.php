@@ -45,7 +45,9 @@ class CloudStorage extends Model
      */
     protected $dates = [
         'space_checked_at',
-        'uploaded_at'
+        'uploaded_at',
+        'disabled_at',
+        'enabled_at'
     ];
 
     /**

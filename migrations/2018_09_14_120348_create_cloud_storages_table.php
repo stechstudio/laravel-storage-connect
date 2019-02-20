@@ -30,7 +30,6 @@ class CreateCloudStoragesTable extends Migration
             $table->bigInteger('space_available')->nullable();
             $table->float('percent_full', 4)->default(0);
 
-
             $table->timestamp('space_checked_at')->nullable();
             $table->timestamp('uploaded_at')->nullable();
             $table->timestamps();
