@@ -37,10 +37,10 @@ class UploadException extends \RuntimeException
      */
     protected $request;
 
-    public function __construct(UploadRequest $request, $previous = null)
+    public function __construct(UploadRequest $request, $previous = null, $message = null)
     {
         $this->request = $request;
-        parent::__construct(null, null, $previous);
+        parent::__construct($message, null, $previous);
     }
 
     /**

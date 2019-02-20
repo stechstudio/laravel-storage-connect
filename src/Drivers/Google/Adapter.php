@@ -220,4 +220,9 @@ class Adapter extends AbstractAdapter
     {
 
     }
+
+    public function pathExists($remotePath)
+    {
+        // stub
+    }
 }

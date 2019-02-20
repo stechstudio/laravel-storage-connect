@@ -217,4 +217,11 @@ abstract class AbstractAdapter
      * @return UploadResponse
      */
     abstract function checkUploadStatus(UploadResponse $response);
+
+    /**
+     * @param string $remotePath
+     *
+     * @return bool
+     */
+    abstract function pathExists($remotePath);
 }

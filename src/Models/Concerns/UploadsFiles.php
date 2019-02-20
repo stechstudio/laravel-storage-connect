@@ -4,6 +4,7 @@ namespace STS\StorageConnect\Models\Concerns;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Queue\InteractsWithQueue;
 use STS\StorageConnect\Contracts\UploadTarget;
 use STS\StorageConnect\Events\UploadFailed;
 use STS\StorageConnect\Events\UploadInProgress;
@@ -29,7 +30,7 @@ trait UploadsFiles
      *
      * @return UploadResponse|bool
      */
-    public function upload( $source, $destinationPath = null, $shouldQueue = true, $queueJob = null )
+    public function upload($source, $destinationPath = null, $shouldQueue = true, $queueJob = null)
     {
         $this->verify();
 
@@ -55,26 +56,31 @@ trait UploadsFiles
      *
      * @return UploadResponse
      */
-    protected function handleUpload( UploadRequest $request )
+    protected function handleUpload(UploadRequest $request)
     {
         return $this->processResponse($this->adapter()->upload($request));
     }
 
     /**
      * @param UploadResponse $response
+     * @param InteractsWithQueue $queueJob
      */
-    public function checkUploadStatus( UploadResponse $response, $queueJob )
+    public function checkUploadStatus(UploadResponse $response, InteractsWithQueue $queueJob)
     {
         $response->incrementStatusCheck();
 
         try {
             $this->processResponse($this->adapter()->checkUploadStatus($response));
         } catch (UploadException $exception) {
+            if($exception->shouldRetry()) {
+                $queueJob->release();
+            } else {
+                $queueJob->fail($exception);
+                event(new UploadFailed($this, $exception));
+            }
+
             if ($exception->shouldDisable()) {
                 $this->disable($exception->getReason());
-                $queueJob->fail($exception);
-            } else {
-                $queueJob->release();
             }
         }
     }
@@ -84,7 +90,7 @@ trait UploadsFiles
      *
      * @return UploadResponse
      */
-    protected function processResponse( UploadResponse $response )
+    protected function processResponse(UploadResponse $response)
     {
         if ($response->isAsync()) {
             dispatch(new CheckUploadStatus($this, $response));
@@ -106,11 +112,11 @@ trait UploadsFiles
 
     /**
      * @param UploadException $exception
-     * @param null            $job
+     * @param null $job
      *
      * @return mixed
      */
-    protected function handleUploadError( UploadException $exception, $job = null )
+    protected function handleUploadError(UploadException $exception, $job = null)
     {
         $exception->setStorage($this);
 
@@ -131,5 +137,21 @@ trait UploadsFiles
         }
 
         event(new UploadFailed($this, $exception));
+    }
+
+    /**
+     * @param $path
+     *
+     * @return bool
+     */
+    public function isUploaded($path)
+    {
+        if($path instanceof Model && $path instanceof UploadTarget) {
+            $path = $path->upload_destination_path;
+        }
+
+        return $this->adapter()->pathExists(
+            str_start($path, '/')
+        );
     }
 }

@@ -2,6 +2,9 @@
 
 namespace STS\StorageConnect;
 
+use STS\Backoff\Backoff;
+use STS\Backoff\Strategies\PolynomialStrategy;
+
 class UploadResponse
 {
     /**
@@ -55,6 +58,17 @@ class UploadResponse
     public function getStatusChecks()
     {
         return $this->statusChecks;
+    }
+
+    /**
+     * @return int
+     */
+    public function getNextCheckDelay()
+    {
+        return (new Backoff)
+            ->setStrategy(new PolynomialStrategy(5, 2))
+            ->setWaitCap(300)
+            ->getWaitTime($this->getStatusChecks());
     }
 
     /**

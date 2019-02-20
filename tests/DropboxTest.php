@@ -58,8 +58,6 @@ class DropboxTest extends DriverTestCase
             ]
         ]);
 
-
-
         return $service;
     }
 }

@@ -13,6 +13,9 @@ use STS\StorageConnect\Models\Quota;
 use STS\StorageConnect\UploadRequest;
 use STS\StorageConnect\UploadResponse;
 
+/**
+ * @method Dropbox service()
+ */
 class Adapter extends AbstractAdapter
 {
     /**
@@ -30,7 +33,7 @@ class Adapter extends AbstractAdapter
      *
      * @return array
      */
-    protected function mapUserDetails( $user )
+    protected function mapUserDetails($user)
     {
         return [
             'name'  => $user->user['name']['display_name'],
@@ -54,7 +57,7 @@ class Adapter extends AbstractAdapter
      * @return UploadResponse
      *
      */
-    public function upload( UploadRequest $request )
+    public function upload(UploadRequest $request)
     {
         try {
             if (starts_with($request->getSourcePath(), "http")) {
@@ -71,11 +74,11 @@ class Adapter extends AbstractAdapter
 
     /**
      * @param DropboxClientException $dropbox
-     * @param UploadException        $upload
+     * @param UploadException $upload
      *
      * @return UploadException
      */
-    protected function handleUploadException( DropboxClientException $dropbox, UploadException $upload )
+    protected function handleUploadException(DropboxClientException $dropbox, UploadException $upload)
     {
         // First check for connection failure
         if (str_contains($dropbox->getMessage(), "Connection timed out")) {
@@ -114,21 +117,43 @@ class Adapter extends AbstractAdapter
      *
      * @return UploadResponse
      */
-    public function checkUploadStatus( UploadResponse $response )
+    public function checkUploadStatus(UploadResponse $response)
     {
         try {
             $result = $this->service()->checkJobStatus($response->getOriginal());
-
-            if($result instanceof FileMetadata) {
-                return new UploadResponse( $response->getRequest(), $result );
-            }
-
-            if($result == "in_progress") {
-                return $response;
-            }
         } catch (DropboxClientException $e) {
-            logger($e);
             throw $this->handleUploadException($e, new UploadException($response->getRequest(), $e));
+        }
+
+        if ($result instanceof FileMetadata) {
+            return new UploadResponse($response->getRequest(), $result);
+        }
+
+        if ($result == "in_progress") {
+            return $response;
+        }
+
+        // At this point we seem to have an unexpected result from Dropbox. If we have tried at least
+        // 10 times, I think it's worth just failing at this point.
+        if ($response->getStatusChecks() > 10) {
+            throw new UploadException($response->getRequest(), null, 'Unexpected response from Dropbox when checking on async job: ' . $result);
+        }
+
+        // Ok then, we'll keep retrying
+        return $response;
+    }
+
+    /**
+     * @param string $remotePath
+     *
+     * @return bool
+     */
+    public function pathExists($remotePath)
+    {
+        try {
+            return $this->service()->getMetadata($remotePath) instanceof FileMetadata;
+        } catch(DropboxClientException $e) {
+            return false;
         }
     }
 
