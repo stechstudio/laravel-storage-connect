@@ -4,7 +4,6 @@ namespace STS\StorageConnect\Models\Concerns;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Queue\InteractsWithQueue;
 use STS\StorageConnect\Contracts\UploadTarget;
 use STS\StorageConnect\Events\UploadFailed;
 use STS\StorageConnect\Events\UploadInProgress;
@@ -63,9 +62,9 @@ trait UploadsFiles
 
     /**
      * @param UploadResponse $response
-     * @param InteractsWithQueue $queueJob
+     * @param $queueJob
      */
-    public function checkUploadStatus(UploadResponse $response, InteractsWithQueue $queueJob)
+    public function checkUploadStatus(UploadResponse $response, $queueJob)
     {
         $response->incrementStatusCheck();
 
