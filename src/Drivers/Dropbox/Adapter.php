@@ -135,6 +135,10 @@ class Adapter extends AbstractAdapter
             return $response;
         }
 
+        if($result == "failed") {
+            throw new UploadException($response->getRequest(), null, "Async upload failed");
+        }
+
         // At this point we seem to have an unexpected result from Dropbox. If we have tried at least
         // 10 times, I think it's worth just failing at this point.
         if ($response->getStatusChecks() > 10) {
