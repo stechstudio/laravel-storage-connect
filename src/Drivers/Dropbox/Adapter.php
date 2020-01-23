@@ -2,6 +2,8 @@
 
 namespace STS\StorageConnect\Drivers\Dropbox;
 
+use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
 use Kunnu\Dropbox\Dropbox;
 use Kunnu\Dropbox\DropboxApp;
 use Kunnu\Dropbox\Exceptions\DropboxClientException;
@@ -48,7 +50,7 @@ class Adapter extends AbstractAdapter
     {
         $usage = $this->service()->getSpaceUsage();
 
-        return new Quota(array_get($usage, "allocation.allocated", 0), array_get($usage, "used", 0));
+        return new Quota(Arr::get($usage, "allocation.allocated", 0), Arr::get($usage, "used", 0));
     }
 
     /**
@@ -60,7 +62,7 @@ class Adapter extends AbstractAdapter
     public function upload(UploadRequest $request)
     {
         try {
-            if (starts_with($request->getSourcePath(), "http")) {
+            if (Str::startsWith($request->getSourcePath(), "http")) {
                 return new UploadResponse($request, $this->service()->saveUrl($request->getDestinationPath(), $request->getSourcePath()), true);
             }
 
@@ -81,12 +83,12 @@ class Adapter extends AbstractAdapter
     protected function handleUploadException(DropboxClientException $dropbox, UploadException $upload)
     {
         // First check for connection failure
-        if (str_contains($dropbox->getMessage(), "Connection timed out")) {
+        if (Str::contains($dropbox->getMessage(), "Connection timed out")) {
             return $upload->retry("Connection timeout");
         }
 
         // Other known errors
-        if (str_contains($dropbox->getMessage(), "Async Job ID cannot be null")) {
+        if (Str::contains($dropbox->getMessage(), "Async Job ID cannot be null")) {
             return $upload->message("Invalid upload job ID");
         }
 
@@ -97,15 +99,15 @@ class Adapter extends AbstractAdapter
             return $upload->retry("Unknown error uploading file to Dropbox: " . $dropbox->getMessage());
         }
 
-        if (str_contains(array_get($error, 'error_summary'), "insufficient_space")) {
+        if (Str::contains(Arr::get($error, 'error_summary'), "insufficient_space")) {
             return $upload->disable("Dropbox account is full", CloudStorage::SPACE_FULL);
         }
 
-        if (str_contains(array_get($error, 'error_summary'), "invalid_access_token")) {
+        if (Str::contains(Arr::get($error, 'error_summary'), "invalid_access_token")) {
             return $upload->disable("Dropbox integration is invalid", CloudStorage::INVALID_TOKEN);
         }
 
-        if (str_contains(array_get($error, 'error_summary'), 'too_many_write_operations')) {
+        if (Str::contains(Arr::get($error, 'error_summary'), 'too_many_write_operations')) {
             return $upload->retry("Hit rate limit");
         }
 
@@ -167,7 +169,7 @@ class Adapter extends AbstractAdapter
             ['random_string_generator' => 'openssl']
         );
 
-        $service->setAccessToken(array_get($this->token, "access_token"));
+        $service->setAccessToken(Arr::get($this->token, "access_token"));
 
         return $service;
     }

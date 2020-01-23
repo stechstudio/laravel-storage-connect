@@ -3,6 +3,8 @@
 namespace STS\StorageConnect\Drivers;
 
 use Illuminate\Session\Store;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
 use SocialiteProviders\Manager\OAuth2\User;
 use StorageConnect;
 
@@ -28,7 +30,7 @@ trait OAuthBehavior
         parent::__construct(
             app('request'), $config['client_id'],
             $config['client_secret'], $this->callbackUrl($config, app('request')),
-            array_get($config, 'guzzle', [])
+            Arr::get($config, 'guzzle', [])
         );
     }
 
@@ -38,7 +40,7 @@ trait OAuthBehavior
     protected function callbackUrl($config, $request)
     {
         return sprintf("https://%s/%s/callback/%s",
-            array_get($config, 'callback_domain') ?: config('storage-connect.callback_domain') ?: $request->getHost(),
+            Arr::get($config, 'callback_domain') ?: config('storage-connect.callback_domain') ?: $request->getHost(),
             config('storage-connect.path'),
             $this->name()
         );
@@ -58,7 +60,7 @@ trait OAuthBehavior
     protected function getState()
     {
         return base64_encode(json_encode(array_merge(
-            ['csrf' => str_random(40)],
+            ['csrf' => Str::random(40)],
             StorageConnect::getState()
         )));
     }

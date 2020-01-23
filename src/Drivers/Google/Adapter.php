@@ -6,6 +6,7 @@ use Google_Client;
 use Google_Http_MediaFileUpload;
 use Google_Service_Drive;
 use Google_Service_Drive_DriveFile;
+use Illuminate\Support\Str;
 use STS\StorageConnect\Drivers\AbstractAdapter;
 use STS\StorageConnect\Models\Quota;
 use StorageConnect;
@@ -114,7 +115,7 @@ class Adapter extends AbstractAdapter
      */
     protected function stat( $sourcePath )
     {
-        if (starts_with($sourcePath, "http")) {
+        if (Str::startsWith($sourcePath, "http")) {
             $headers = array_change_key_case(get_headers($sourcePath, 1));
             return [$headers['content-length'], $headers['content-type']];
         }

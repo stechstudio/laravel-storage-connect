@@ -2,6 +2,7 @@
 namespace STS\StorageConnect\Tests;
 
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Arr;
 use StorageConnect;
 
 class AuthorizeTest extends TestCase
@@ -15,7 +16,7 @@ class AuthorizeTest extends TestCase
     {
         StorageConnect::includeState(['foo' => 'bar']);
 
-        $this->assertEquals('bar', array_get(
+        $this->assertEquals('bar', Arr::get(
             json_decode(base64_decode($this->getQuery()['state']), true),
             'foo')
         );

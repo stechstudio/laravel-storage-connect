@@ -2,6 +2,7 @@
 
 namespace STS\StorageConnect;
 
+use Illuminate\Support\Arr;
 use Illuminate\Support\Manager;
 use Illuminate\Support\Str;
 use Illuminate\Http\RedirectResponse;
@@ -170,13 +171,13 @@ class StorageConnectManager extends Manager
     {
         $props = (array) $this->app['request']->session()->pull('storage-connect');
 
-        $storage = array_get($props, 'custom') == true
+        $storage = Arr::get($props, 'custom') == true
             ? $this->driver($driver)
-            : CloudStorage::findOrFail(array_get($props, 'id'));
+            : CloudStorage::findOrFail(Arr::get($props, 'id'));
 
         $this->adapter($driver)->finish($storage);
 
-        return $this->redirectAfterConnect(array_get($props, 'redirect'));
+        return $this->redirectAfterConnect(Arr::get($props, 'redirect'));
     }
 
     /**

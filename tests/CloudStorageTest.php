@@ -11,12 +11,6 @@ use Event;
 
 class CloudStorageTest extends TestCase
 {
-    protected function setUp()
-    {
-        parent::setUp();
-
-        // Your code here
-    }
 
     public function testStateAccessors()
     {

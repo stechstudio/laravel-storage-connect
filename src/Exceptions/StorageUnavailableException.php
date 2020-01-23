@@ -2,6 +2,7 @@
 
 namespace STS\StorageConnect\Exceptions;
 
+use Illuminate\Support\Arr;
 use STS\StorageConnect\Connections\Connection;
 use STS\StorageConnect\Models\CloudStorage;
 use Throwable;
@@ -45,7 +46,7 @@ class StorageUnavailableException extends \Exception
      */
     protected function reason(CloudStorage $storage)
     {
-        return array_get([
+        return Arr::get([
             'invalid' => 'Connection is invalid, please re-authorize',
             'full' => 'Storage is full, please clear space or upgrade storage account'
         ], $storage->reason,'unknown reason');

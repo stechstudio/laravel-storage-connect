@@ -3,6 +3,7 @@ namespace STS\StorageConnect;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Str;
 use STS\StorageConnect\Contracts\UploadTarget;
 
 class UploadRequest
@@ -41,9 +42,9 @@ class UploadRequest
             $this->destinationPath = $destinationPath;
         }
 
-        $this->destinationPath = str_start($this->destinationPath, "/");
+        $this->destinationPath = Str::start($this->destinationPath, "/");
 
-        if (starts_with($this->sourcePath, "s3://")) {
+        if (Str::startsWith($this->sourcePath, "s3://")) {
             app('aws')->createClient('s3')->registerStreamWrapper();
         }
     }

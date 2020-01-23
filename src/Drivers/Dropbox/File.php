@@ -1,6 +1,7 @@
 <?php
 namespace STS\StorageConnect\Drivers\Dropbox;
 
+use Illuminate\Support\Str;
 use Kunnu\Dropbox\DropboxFile;
 
 class File extends DropboxFile
@@ -15,7 +16,7 @@ class File extends DropboxFile
     {
         parent::__construct($filePath, $mode = self::MODE_READ);
 
-        if(starts_with($filePath, "s3://")) {
+        if(Str::startsWith($filePath, "s3://")) {
             $this->setStream($this->getSeekableS3Stream());
         }
     }

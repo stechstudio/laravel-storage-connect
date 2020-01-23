@@ -7,7 +7,7 @@ use STS\StorageConnect\Models\CustomManagedCloudStorage;
 
 class CustomManagedStorageTest extends TestCase
 {
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
 
