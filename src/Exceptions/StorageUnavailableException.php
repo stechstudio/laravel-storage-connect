@@ -34,7 +34,7 @@ class StorageUnavailableException extends \Exception
         }
 
         if(!$storage->enabled) {
-            return "Connection has been disabled: " . $this->reason($storage);
+            return "Connection has been disabled: " . $this->reason($storage) . " [" . $storage->owner_description . "]";
         }
     }
 

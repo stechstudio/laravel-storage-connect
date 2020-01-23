@@ -11,6 +11,7 @@ use STS\StorageConnect\Exceptions\StorageUnavailableException;
  * @property int $id
  * @property int $owner_id
  * @property string $owner_type
+ * @property string $owner_description
  * @property Model $owner
  * @property string $name
  * @property string $email
