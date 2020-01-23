@@ -66,7 +66,7 @@ class UploadResponse
     public function getNextCheckDelay()
     {
         return (new Backoff)
-            ->setStrategy(new PolynomialStrategy(5, 2))
+            ->setStrategy(new PolynomialStrategy(20, 2))
             ->setWaitCap(300)
             ->getWaitTime($this->getStatusChecks());
     }

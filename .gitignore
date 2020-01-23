@@ -4,3 +4,4 @@ vendor
 coverage
 .idea
 dist
+.phpunit.result.cache
