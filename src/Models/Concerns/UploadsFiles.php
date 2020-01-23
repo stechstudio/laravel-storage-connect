@@ -92,7 +92,7 @@ trait UploadsFiles
     protected function processResponse(UploadResponse $response)
     {
         if ($response->isAsync()) {
-            dispatch(new CheckUploadStatus($this, $response));
+            dispatch(new CheckUploadStatus($this, $response))->delay(15);
 
             if ($response->getStatusChecks() == 0) {
                 event(new UploadStarted($this, $response));
