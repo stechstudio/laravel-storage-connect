@@ -1,6 +1,6 @@
 # Laravel Storage Connect
 
-**This package is no longer being maintained. It is functional, at least for the Dropbox drive. However we don't plan to do much new development with this package. If you want to take over the development/maintenance, open an issue to let us know.**
+**This package is no longer being maintained. It is functional, at least for the Dropbox driver. However we don't plan to do much new development with this package. If you want to take over the development/maintenance, open an issue to let us know.**
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/stechstudio/laravel-storage-connect.svg?style=flat-square)](https://packagist.org/packages/stechstudio/laravel-storage-connect)
 [![Build Status](https://img.shields.io/travis/stechstudio/laravel-storage-connect/master.svg?style=flat-square)](https://travis-ci.org/stechstudio/laravel-storage-connect)
