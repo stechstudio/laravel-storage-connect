@@ -53,7 +53,7 @@ class StorageConnectManager extends Manager
     {
         $this->verifyDriver($driver);
 
-        return $this->app->make("sts.storage-connect.adapter.$driver");
+        return $this->container->make("sts.storage-connect.adapter.$driver");
     }
 
     /**
@@ -61,7 +61,7 @@ class StorageConnectManager extends Manager
      */
     public function getDefaultDriver()
     {
-        return $this->app['config']['storage-connect.default'];
+        return $this->container['config']['storage-connect.default'];
     }
 
     /**
@@ -72,10 +72,10 @@ class StorageConnectManager extends Manager
     public function isSupportedDriver($driver)
     {
         return in_array($driver, $this->registered)
-            && in_array($driver, $this->app['config']['storage-connect.enabled'])
-            && is_array($this->app['config']["services.$driver"])
-            && $this->app['config']["services.$driver.client_id"] != null
-            && $this->app['config']["services.$driver.client_secret"] != null;
+            && in_array($driver, $this->container['config']['storage-connect.enabled'])
+            && is_array($this->container['config']["services.$driver"])
+            && $this->container['config']["services.$driver.client_id"] != null
+            && $this->container['config']["services.$driver.client_secret"] != null;
     }
 
     /**
@@ -169,7 +169,7 @@ class StorageConnectManager extends Manager
      */
     public function finish($driver)
     {
-        $props = (array) $this->app['request']->session()->pull('storage-connect');
+        $props = (array) $this->container['request']->session()->pull('storage-connect');
 
         $storage = Arr::get($props, 'custom') == true
             ? $this->driver($driver)
@@ -189,7 +189,7 @@ class StorageConnectManager extends Manager
     {
         return new RedirectResponse(
             $redirectUrl == null
-                ? $this->app['config']->get('storage-connect.redirect_after_connect')
+                ? $this->container['config']->get('storage-connect.redirect_after_connect')
                 : $redirectUrl
         );
     }
@@ -203,11 +203,11 @@ class StorageConnectManager extends Manager
             return $appName;
         }
 
-        if ($appName = $this->app['config']->get('storage-connect.app_name')) {
+        if ($appName = $this->container['config']->get('storage-connect.app_name')) {
             return $appName;
         }
 
-        return $this->app['config']->get('app.name');
+        return $this->container['config']->get('app.name');
     }
 
     /**
@@ -230,15 +230,15 @@ class StorageConnectManager extends Manager
      */
     public function register($name, $abstractClass, $providerClass)
     {
-        $this->app->bind($abstractClass, function($app) use($abstractClass, $name) {
+        $this->container->bind($abstractClass, function($app) use($abstractClass, $name) {
             return new $abstractClass($app['config']->get("services.$name"));
         });
-        $this->app->alias($abstractClass, "sts.storage-connect.adapter.$name");
+        $this->container->alias($abstractClass, "sts.storage-connect.adapter.$name");
 
-        $this->app->bind($providerClass, function($app) use($providerClass, $name) {
+        $this->container->bind($providerClass, function($app) use($providerClass, $name) {
             return new $providerClass($app['config']->get("services.$name"));
         });
-        $this->app->alias($providerClass, "sts.storage-connect.provider.$name");
+        $this->container->alias($providerClass, "sts.storage-connect.provider.$name");
 
         $this->registered[] = $name;
     }
