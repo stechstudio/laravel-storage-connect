@@ -18,7 +18,7 @@
         "google/apiclient": "^2.2",
         "kunalvarma05/dropbox-php-sdk": "dev-master",
         "socialiteproviders/dropbox": "^4.0",
-        "socialiteproviders/google": "^3.0",
+        "socialiteproviders/google": "^3.0||^4.0",
         "stechstudio/backoff": "^1.0"
     },
     "require-dev": {
