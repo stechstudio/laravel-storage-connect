@@ -48,7 +48,7 @@ class UploadFile implements ShouldQueue
      * @param $destinationPath
      * @param CloudStorage $storage
      */
-    public function __construct($source, $destinationPath = null, CloudStorage $storage)
+    public function __construct($source, $destinationPath, CloudStorage $storage)
     {
         $this->source = $source;
         $this->destinationPath = $destinationPath;
