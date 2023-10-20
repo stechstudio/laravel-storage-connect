@@ -35,20 +35,14 @@ class CloudStorage extends Model
      * @var array
      */
     protected $casts = [
-        'token'     => 'array',
-        'connected' => 'boolean',
-        'enabled'   => 'boolean',
-        'full'      => 'boolean',
-    ];
-
-    /**
-     * @var array
-     */
-    protected $dates = [
-        'space_checked_at',
-        'uploaded_at',
-        'disabled_at',
-        'enabled_at'
+        'token'            => 'array',
+        'connected'        => 'boolean',
+        'enabled'          => 'boolean',
+        'full'             => 'boolean',
+        'space_checked_at' => 'datetime',
+        'uploaded_at'      => 'datetime',
+        'disabled_at'      => 'datetime',
+        'enabled_at'       => 'datetime',
     ];
 
     /**
