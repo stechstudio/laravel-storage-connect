@@ -16,7 +16,7 @@
     ],
     "require": {
         "google/apiclient": "^2.2",
-        "stechstudio/dropbox-php-sdk": "dev-master",
+        "stechstudio/dropbox-php-sdk": "^0.1",
         "socialiteproviders/dropbox": "^4.0",
         "socialiteproviders/google": "^3.0||^4.0",
         "stechstudio/backoff": "^1.0"
